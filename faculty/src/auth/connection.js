@@ -1,2 +1,5 @@
-const baseURL = 'http://localhost:5000';
+// const baseURL = 'http://localhost:5000';
+// export default baseURL;
+
+const baseURL = 'https://kite-cgpa-backend--mu.vercel.app';
 export default baseURL;
