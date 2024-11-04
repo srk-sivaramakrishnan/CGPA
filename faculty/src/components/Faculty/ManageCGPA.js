@@ -103,8 +103,8 @@ function ManageCGPA() {
             // Calculate GPA
             calculateGPA(jsonData);
     
-            // Chunking the data for upload
-            const chunkedData = chunkArray(jsonData, 10); // Adjust the size as needed
+            // Chunking the data for upload into smaller batches of 5 entries
+            const chunkedData = chunkArray(jsonData, 5); // Set chunk size to 5
             setLoading(true);
             
             try {
@@ -145,7 +145,6 @@ function ManageCGPA() {
         reader.readAsArrayBuffer(file);
     };
     
-
     // Function to chunk array into smaller arrays of a given size
     const chunkArray = (array, chunkSize) => {
         const chunks = [];
@@ -154,6 +153,7 @@ function ManageCGPA() {
         }
         return chunks;
     };
+    
 
     const handleSave = async () => {
         if (gpaResults.length === 0) {
