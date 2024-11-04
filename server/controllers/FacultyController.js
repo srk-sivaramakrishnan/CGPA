@@ -103,7 +103,7 @@ exports.uploadCGPAData = async (req, res) => {
                     batch
                 );
             } else {
-                console.warn(`Missing required information for student at row ${i + 1}:`, data[i]);
+           
             }
         }
 

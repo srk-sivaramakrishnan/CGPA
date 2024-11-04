@@ -15,7 +15,7 @@ function ManageCGPA() {
     const [gpaResults, setGpaResults] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [totalCredits, setTotalCredits] = useState(0);
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -78,7 +78,6 @@ function ManageCGPA() {
                     section,
                     batch
                 };
-            } else {
             }
         }
         setGpaResults(Object.values(results));
@@ -100,43 +99,62 @@ function ManageCGPA() {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            
+            // Calculate GPA
             calculateGPA(jsonData);
+    
+            // Chunking the data for upload
+            const chunkedData = chunkArray(jsonData, 10); // Adjust the size as needed
+            setLoading(true);
+            
+            try {
+                for (let i = 0; i < chunkedData.length; i++) {
+                    const chunk = chunkedData[i];
+                    const chunkFormData = new FormData();
+                    chunkFormData.append('file', file);
+                    chunkFormData.append('semester', semester);
+                    chunkFormData.append('department', department);
+                    chunkFormData.append('year', facultyClass);
+                    chunkFormData.append('section', section);
+                    chunkFormData.append('batch', batch);
+                    chunkFormData.append('data', JSON.stringify(chunk)); // Sending chunk data
+    
+                    await axios.post(`${baseURL}/faculty/upload-cgpa`, chunkFormData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        },
+                        timeout: 120000,
+                    });
+                    console.log(`Chunk ${i + 1} uploaded successfully`);
+                }
+                alert('All chunks uploaded successfully');
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                if (error.response) {
+                    alert(`Server Error: ${error.response.data.message || 'Failed to upload file.'}`);
+                } else if (error.request) {
+                    alert('Network Error: No response from the server. Please try again later.');
+                } else {
+                    alert(`Error: ${error.message}`);
+                }
+            } finally {
+                setLoading(false);
+            }
         };
         reader.readAsArrayBuffer(file);
-    
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('semester', semester);
-        formData.append('department', department);
-        formData.append('year', facultyClass);
-        formData.append('section', section);
-        formData.append('batch', batch);
-    
-        try {
-            await axios.post(`${baseURL}/faculty/upload-cgpa`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-                timeout: 120000, // Timeout set to 120 seconds
-                onUploadProgress: (progressEvent) => {
-                    console.log(`Upload Progress: ${(progressEvent.loaded / progressEvent.total) * 100}%`);
-                },
-            });
-            alert('File uploaded successfully');
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            if (error.response) {
-                alert(`Server Error: ${error.response.data.message || 'Failed to upload file.'}`);
-            } else if (error.request) {
-                alert('Network Error: No response from the server. Please try again later.');
-            } else {
-                alert(`Error: ${error.message}`);
-            }
-        }        
     };
     
-    
+
+    // Function to chunk array into smaller arrays of a given size
+    const chunkArray = (array, chunkSize) => {
+        const chunks = [];
+        for (let i = 0; i < array.length; i += chunkSize) {
+            chunks.push(array.slice(i, i + chunkSize));
+        }
+        return chunks;
+    };
+
     const handleSave = async () => {
         if (gpaResults.length === 0) {
             alert('No GPA results to save. Please calculate GPA before saving.');
@@ -157,34 +175,31 @@ function ManageCGPA() {
             gpa: result.gpa,
             cgpa: result.cgpa,
         }));
-    
+
+        // Split the saveData into chunks of 10
+        const chunkedData = chunkArray(saveData, 10);
+
+        setLoading(true);
         try {
-            setLoading(true); // Start loading state
-            await axios.post(`${baseURL}/faculty/save-cgpa-results`, saveData, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-                timeout: 120000, // Set timeout to 120 seconds
-            });
+            for (let i = 0; i < chunkedData.length; i++) {
+                const chunk = chunkedData[i];
+                await axios.post(`${baseURL}/faculty/save-cgpa-results`, chunk, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    },
+                    timeout: 120000, // Timeout set to 120 seconds
+                });
+                console.log(`Batch ${i + 1} saved successfully`);
+            }
             alert('GPA results saved successfully!');
-            setIsModalOpen(false); // Close the popup after saving
+            setIsModalOpen(false);
         } catch (error) {
             console.error('Error saving results:', error);
-            if (error.response) {
-                // Server responded with a status code outside of the 2xx range
-                alert(`Error: ${error.response.data.message || 'Failed to save results. Please try again.'}`);
-            } else if (error.request) {
-                // Request was made but no response received
-                alert('Error: No response from the server. Please try again later.');
-            } else {
-                // Something else caused the error
-                alert(`Error: ${error.message}`);
-            }
+            alert('Failed to save some results. Please try again.');
         } finally {
-            setLoading(false); // End loading state
+            setLoading(false);
         }
     };
-    
 
     return (
         <div className="manage-cgpa-container">
@@ -222,10 +237,10 @@ function ManageCGPA() {
                         <label htmlFor="facultyClass">Studying Year:</label>
                         <select id="facultyClass" value={facultyClass} onChange={(e) => setFacultyClass(e.target.value)} required>
                             <option value="">Select Year</option>
-                            <option value="1st Year">1st Year</option>
-                            <option value="2nd Year">2nd Year</option>
-                            <option value="3rd Year">3rd Year</option>
-                            <option value="4th Year">4th Year</option>
+                            <option value="1st">1st</option>
+                            <option value="2nd">2nd</option>
+                            <option value="3rd">3rd</option>
+                            <option value="4th">4th</option>
                         </select>
                     </div>
     
@@ -237,11 +252,9 @@ function ManageCGPA() {
                             <option value="B">B</option>
                         </select>
                     </div>
-                </div>
     
-                <div className="form-row">
                     <div className="form-group">
-                        <label htmlFor="batch">Batch:</label>
+                        <label htmlFor="batch">Select Batch:</label>
                         <select id="batch" value={batch} onChange={(e) => setBatch(e.target.value)} required>
                             <option value="">Select Batch</option>
                             <option value="2021-2025">2021-2025</option>
@@ -251,23 +264,17 @@ function ManageCGPA() {
                         </select>
                     </div>
                 </div>
-    
                 <div className="form-group">
                     <label htmlFor="file">Upload File:</label>
-                    <input type="file" id="file" onChange={handleFileChange} required />
+                    <input type="file" id="file" accept=".xlsx, .xls" onChange={handleFileChange} required />
                 </div>
-    
-                <button type="submit" className="upload-button">
-                    <Save size={16} />
-                    Upload CGPA
-                </button>
+                <button type="submit" className="btn-calculate">Upload and Calculate GPA</button>
             </form>
-    
             {isModalOpen && (
                 <div className="modal">
                     <div className="modal-content">
-
-                        <h3>GPA Results</h3>
+                        <h2>GPA and CGPA Results</h2>
+                        <p>Total Credits: {totalCredits}</p>
                         <table>
                             <thead>
                                 <tr>
@@ -276,30 +283,31 @@ function ManageCGPA() {
                                     <th>Student Name</th>
                                     <th>Total Score</th>
                                     <th>GPA</th>
+                                    <th>CGPA</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {gpaResults.map((result, index) => (
-                                    <tr key={index}>
+                                {gpaResults.map((result) => (
+                                    <tr key={result.rollNo}>
                                         <td>{result.rollNo}</td>
                                         <td>{result.registerNumber}</td>
                                         <td>{result.studentName}</td>
                                         <td>{result.totalScore}</td>
                                         <td>{result.gpa}</td>
+                                        <td>{result.cgpa}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <h4>Total Credits: {totalCredits}</h4>
-                        <button onClick={handleSave} className="save-button">
-                            Save Results
+                        <button className="btn-save" onClick={handleSave}>
+                            <Save className="btn-icon" /> Save GPA Results
                         </button>
+                        <button className="btn-close" onClick={() => setIsModalOpen(false)}>Close</button>
                     </div>
                 </div>
             )}
         </div>
     );
-    
 }
 
 export default ManageCGPA;

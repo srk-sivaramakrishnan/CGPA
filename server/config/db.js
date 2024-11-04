@@ -9,9 +9,6 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT,
-    connectionLimit: 10,       // Limit the number of connections
-    connectTimeout: 10000,     // 10 seconds for initial connection
-    acquireTimeout: 10000      // 10 seconds to acquire a connection from the pool
 });
 
 pool.getConnection((err, connection) => {
