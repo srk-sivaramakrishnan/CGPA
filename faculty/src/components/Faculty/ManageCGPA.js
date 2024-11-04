@@ -15,6 +15,7 @@ function ManageCGPA() {
     const [gpaResults, setGpaResults] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [totalCredits, setTotalCredits] = useState(0);
+    const [loading, setLoading] = useState(false); 
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -87,14 +88,14 @@ function ManageCGPA() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (!semester || !department || !facultyClass || !section || !batch || !file) {
             alert('Please fill in all fields and upload the file.');
             return;
         }
-
+    
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             const data = new Uint8Array(event.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -102,7 +103,7 @@ function ManageCGPA() {
             calculateGPA(jsonData);
         };
         reader.readAsArrayBuffer(file);
-
+    
         const formData = new FormData();
         formData.append('file', file);
         formData.append('semester', semester);
@@ -110,22 +111,28 @@ function ManageCGPA() {
         formData.append('year', facultyClass);
         formData.append('section', section);
         formData.append('batch', batch);
-
+    
         try {
             await axios.post(`${baseURL}/faculty/upload-cgpa`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
+                timeout: 120000, // Set timeout to 120 seconds
             });
             alert('File uploaded successfully');
         } catch (error) {
             console.error('Error uploading file:', error);
             alert('Error uploading file. Please try again.');
-        }        
+        }
     };
-
+    
     const handleSave = async () => {
+        if (gpaResults.length === 0) {
+            alert('No GPA results to save. Please calculate GPA before saving.');
+            return;
+        }
+    
         const saveData = gpaResults.map(result => ({
             rollNo: result.rollNo,
             registerNumber: result.registerNumber,
@@ -142,16 +149,29 @@ function ManageCGPA() {
         }));
     
         try {
+            setLoading(true); // Start loading state
             await axios.post(`${baseURL}/faculty/save-cgpa-results`, saveData, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
+                timeout: 120000, // Set timeout to 120 seconds
             });
             alert('GPA results saved successfully!');
             setIsModalOpen(false); // Close the popup after saving
         } catch (error) {
             console.error('Error saving results:', error);
-            alert('Error saving results. Please try again.');
+            if (error.response) {
+                // Server responded with a status code outside of the 2xx range
+                alert(`Error: ${error.response.data.message || 'Failed to save results. Please try again.'}`);
+            } else if (error.request) {
+                // Request was made but no response received
+                alert('Error: No response from the server. Please try again later.');
+            } else {
+                // Something else caused the error
+                alert(`Error: ${error.message}`);
+            }
+        } finally {
+            setLoading(false); // End loading state
         }
     };
     
@@ -159,6 +179,7 @@ function ManageCGPA() {
     return (
         <div className="manage-cgpa-container">
             <h2>Manage CGPA</h2>
+            {loading && <div className="loading">Saving results...</div>}
             <form onSubmit={handleSubmit}>
                 <div className="form-row">
                     <div className="form-group">
