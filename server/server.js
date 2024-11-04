@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors()); // Enable CORS
+app.use(cors()); // Enable CORS for all origins (this can be adjusted in production)
 app.use(bodyParser.json());
 
 // Use routes
