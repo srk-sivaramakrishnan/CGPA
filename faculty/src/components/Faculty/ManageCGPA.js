@@ -113,6 +113,9 @@ function ManageCGPA() {
         formData.append('batch', batch);
     
         try {
+            // Log the form data for debugging
+            console.log("Uploading form data: ", formData);
+            
             await axios.post(`${baseURL}/faculty/upload-cgpa`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -123,9 +126,16 @@ function ManageCGPA() {
             alert('File uploaded successfully');
         } catch (error) {
             console.error('Error uploading file:', error);
-            alert('Error uploading file. Please try again.');
+            if (error.response) {
+                alert(`Error: ${error.response.data.message || 'Failed to upload file.'}`);
+            } else if (error.request) {
+                alert('Error: No response from the server. Please try again later.');
+            } else {
+                alert(`Error: ${error.message}`);
+            }
         }
     };
+    
     
     const handleSave = async () => {
         if (gpaResults.length === 0) {
