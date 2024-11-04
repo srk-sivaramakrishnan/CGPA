@@ -59,6 +59,8 @@ exports.getFacultyProfile = async (req, res) => {
 exports.uploadCGPAData = async (req, res) => {
     const filePath = req.file.path;
     const { semester, department, year, section, batch } = req.body;
+
+    console.time('ExcelProcessing'); // Start timer
     const workbook = xlsx.readFile(filePath);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
@@ -68,12 +70,19 @@ exports.uploadCGPAData = async (req, res) => {
         const subjectNames = data[1].slice(3);
         const credits = data[2].slice(3);
 
+        // Validate subject information
+        if (subjectCodes.length === 0 || subjectNames.length === 0 || credits.length === 0) {
+            return res.status(400).json({ message: 'Subject information is incomplete.' });
+        }
+
         // Call the insertSubjects function from FacultyModel
         await facultyModel.insertSubjects(subjectCodes, subjectNames, credits);
 
+        // Process each student's data
         for (let i = 3; i < data.length; i++) {
             const [rollNo, registerNumber, studentName, ...grades] = data[i];
 
+            // Validate required student information
             if (rollNo && registerNumber && studentName) {
                 // Call upsertGrades from FacultyModel
                 await facultyModel.upsertGrades(
@@ -88,14 +97,19 @@ exports.uploadCGPAData = async (req, res) => {
                     section,
                     batch
                 );
+            } else {
+                console.warn(`Missing required information for student at row ${i + 1}:`, data[i]);
             }
         }
 
-        fs.unlinkSync(filePath); // Delete file after processing
+        // Delete the uploaded file after processing
+        fs.unlinkSync(filePath);
+        
+        console.timeEnd('ExcelProcessing'); // Log duration
         res.status(200).json({ message: 'Excel data processed and stored successfully' });
     } catch (error) {
         console.error('Error processing Excel data:', error);
-        res.status(500).json({ message: 'Error processing Excel file' });
+        res.status(500).json({ message: 'Error processing Excel file', error: error.message });
     }
 };
 
