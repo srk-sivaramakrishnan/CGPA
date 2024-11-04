@@ -55,17 +55,34 @@ exports.getFacultyProfile = async (req, res) => {
     }
 };
 
+// Function to chunk array into smaller arrays of a given size
+const chunkArray = (array, chunkSize) => {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+};
+
 // Upload and process CGPA Excel file
 exports.uploadCGPAData = async (req, res) => {
-    const filePath = req.file.path;
-    const { semester, department, year, section, batch } = req.body;
-
-    console.time('ExcelProcessing'); // Start timer
-    const workbook = xlsx.readFile(filePath);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+    const { semester, department, year, section, batch, data } = req.body;
 
     try {
+        // Log the entire request body for debugging
+        console.log("Request Body:", req.body);
+
+        // Check if data exists and is an array
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            return res.status(400).json({ message: 'No data received or data is not an array.' });
+        }
+
+        // Check if data contains expected rows
+        console.log("Data Length:", data.length); // Log the length of data for inspection
+        if (data.length < 3) {
+            return res.status(400).json({ message: 'Insufficient data received. Expected at least 3 header rows.' });
+        }
+
         const subjectCodes = data[0].slice(3);
         const subjectNames = data[1].slice(3);
         const credits = data[2].slice(3);
@@ -83,44 +100,46 @@ exports.uploadCGPAData = async (req, res) => {
         // Call the insertSubjects function from FacultyModel
         await facultyModel.insertSubjects(subjectCodes, subjectNames, credits);
 
-        // Process each student's data
-        for (let i = 3; i < data.length; i++) {
-            const [rollNo, registerNumber, studentName, ...grades] = data[i];
+        // Process each student's data in chunks
+        const studentDataChunks = chunkArray(data.slice(3), 10); // Start processing from the 4th row (index 3)
 
-            // Validate required student information
-            if (rollNo && registerNumber && studentName) {
-                // Call upsertGrades from FacultyModel
-                await facultyModel.upsertGrades(
-                    rollNo,
-                    registerNumber,
-                    studentName,
-                    subjectCodes,
-                    grades,
-                    semester,
-                    department,
-                    year,
-                    section,
-                    batch
-                );
-            } else {
-           
-            }
+        for (const chunk of studentDataChunks) {
+            const upsertPromises = chunk.map(async (row, index) => {
+                console.log(`Processing row ${index + 1} in chunk:`, row); // Log each row for debugging
+
+                const [rollNo, registerNumber, studentName, ...grades] = row;
+
+                // Validate required student information
+                if (rollNo && registerNumber && studentName) {
+                    // Call upsertGrades from FacultyModel
+                    await facultyModel.upsertGrades(
+                        rollNo,
+                        registerNumber,
+                        studentName,
+                        subjectCodes,
+                        grades,
+                        semester,
+                        department,
+                        year,
+                        section,
+                        batch
+                    );
+                } else {
+                    console.error(`Missing required student information for row: ${row}`);
+                }
+            });
+
+            // Wait for all upsert operations in the current chunk to complete
+            await Promise.all(upsertPromises);
         }
 
-        // Delete the uploaded file after processing
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        } else {
-            console.warn(`File not found for deletion: ${filePath}`);
-        }
-        
-        console.timeEnd('ExcelProcessing'); // Log duration
         res.status(200).json({ message: 'Excel data processed and stored successfully' });
     } catch (error) {
         console.error('Error processing Excel data:', error);
-        res.status(500).json({ message: 'Error processing Excel file', error: error.message, stack: error.stack });
+        res.status(500).json({ message: 'Error processing data', error: error.message, stack: error.stack });
     }
 };
+
 
 
 // Save CGPA results and total scores

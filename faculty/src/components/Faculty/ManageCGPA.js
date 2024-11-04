@@ -99,40 +99,60 @@ function ManageCGPA() {
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-            
+    
             // Calculate GPA
             calculateGPA(jsonData);
     
-            // Chunking the data for upload into smaller batches of 5 entries
-            const chunkedData = chunkArray(jsonData, 5); // Set chunk size to 5
-            setLoading(true);
-            
-            try {
-                for (let i = 0; i < chunkedData.length; i++) {
-                    const chunk = chunkedData[i];
-                    const chunkFormData = new FormData();
-                    chunkFormData.append('file', file);
-                    chunkFormData.append('semester', semester);
-                    chunkFormData.append('department', department);
-                    chunkFormData.append('year', facultyClass);
-                    chunkFormData.append('section', section);
-                    chunkFormData.append('batch', batch);
-                    chunkFormData.append('data', JSON.stringify(chunk)); // Sending chunk data
+            // Convert data to JSON format before uploading
+            const jsonFormData = {
+                semester,
+                department,
+                year: facultyClass,
+                section,
+                batch,
+                data: jsonData // Store the JSON data directly
+            };
     
-                    await axios.post(`${baseURL}/faculty/upload-cgpa`, chunkFormData, {
+            // Chunking data into specified ranges
+            const chunkedData = [];
+            const ranges = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]; // Define the ranges
+    
+            for (let i = 0; i < ranges.length - 1; i++) {
+                const start = ranges[i];
+                const end = ranges[i + 1];
+                const chunk = jsonData.slice(start, end);
+                if (chunk.length > 0) {
+                    chunkedData.push({
+                        semester,
+                        department,
+                        year: facultyClass,
+                        section,
+                        batch,
+                        data: chunk
+                    });
+                }
+            }
+    
+            setLoading(true);
+    
+            try {
+                // Sending each chunk of data as a separate request
+                for (const chunk of chunkedData) {
+                    await axios.post(`${baseURL}/faculty/upload-cgpa`, chunk, {
                         headers: {
-                            'Content-Type': 'multipart/form-data',
+                            'Content-Type': 'application/json',
                             'Authorization': `Bearer ${localStorage.getItem('token')}`,
                         },
                         timeout: 120000,
                     });
-                    console.log(`Chunk ${i + 1} uploaded successfully`);
+                    console.log('Chunk uploaded successfully:', chunk);
                 }
-                alert('All chunks uploaded successfully');
+    
+                alert('Data uploaded successfully');
             } catch (error) {
-                console.error('Error uploading file:', error);
+                console.error('Error uploading data:', error);
                 if (error.response) {
-                    alert(`Server Error: ${error.response.data.message || 'Failed to upload file.'}`);
+                    alert(`Server Error: ${error.response.data.message || 'Failed to upload data.'}`);
                 } else if (error.request) {
                     alert('Network Error: No response from the server. Please try again later.');
                 } else {
@@ -142,8 +162,10 @@ function ManageCGPA() {
                 setLoading(false);
             }
         };
+    
         reader.readAsArrayBuffer(file);
     };
+    
     
     // Function to chunk array into smaller arrays of a given size
     const chunkArray = (array, chunkSize) => {
