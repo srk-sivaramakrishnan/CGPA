@@ -15,11 +15,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors()); // Enable CORS for all origins (this can be adjusted in production)
 app.use(bodyParser.json());
 
+// Set server timeout to 2 minutes (120000 milliseconds)
+const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+// Set timeout for the server
+server.setTimeout(120000); // 120 seconds
+
 // Use routes
 app.use('/admin', adminRoutes);
 app.use('/faculty', facultyRoutes);
-
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
