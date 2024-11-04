@@ -61,12 +61,11 @@ exports.uploadCGPAData = async (req, res) => {
     const { semester, department, year, section, batch } = req.body;
 
     console.time('ExcelProcessing'); // Start timer
+    const workbook = xlsx.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
     try {
-        const workbook = xlsx.readFile(filePath);
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
-
         const subjectCodes = data[0].slice(3);
         const subjectNames = data[1].slice(3);
         const credits = data[2].slice(3);
@@ -76,11 +75,13 @@ exports.uploadCGPAData = async (req, res) => {
             return res.status(400).json({ message: 'Subject information is incomplete.' });
         }
 
+        // Log the subject information
+        console.log("Subject Codes:", subjectCodes);
+        console.log("Subject Names:", subjectNames);
+        console.log("Credits:", credits);
+
         // Call the insertSubjects function from FacultyModel
         await facultyModel.insertSubjects(subjectCodes, subjectNames, credits);
-
-        // Array to hold all student data for batch processing
-        const studentData = [];
 
         // Process each student's data
         for (let i = 3; i < data.length; i++) {
@@ -88,48 +89,39 @@ exports.uploadCGPAData = async (req, res) => {
 
             // Validate required student information
             if (rollNo && registerNumber && studentName) {
-                studentData.push({
+                // Call upsertGrades from FacultyModel
+                await facultyModel.upsertGrades(
                     rollNo,
                     registerNumber,
                     studentName,
+                    subjectCodes,
                     grades,
-                });
+                    semester,
+                    department,
+                    year,
+                    section,
+                    batch
+                );
             } else {
                 console.warn(`Missing required information for student at row ${i + 1}:`, data[i]);
             }
         }
 
-        // Batch insert/upsert student grades
-        await Promise.all(studentData.map(student => {
-            return facultyModel.upsertGrades(
-                student.rollNo,
-                student.registerNumber,
-                student.studentName,
-                subjectCodes,
-                student.grades,
-                semester,
-                department,
-                year,
-                section,
-                batch
-            );
-        }));
-
         // Delete the uploaded file after processing
-        fs.unlinkSync(filePath);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        } else {
+            console.warn(`File not found for deletion: ${filePath}`);
+        }
         
         console.timeEnd('ExcelProcessing'); // Log duration
         res.status(200).json({ message: 'Excel data processed and stored successfully' });
     } catch (error) {
         console.error('Error processing Excel data:', error);
-        // Check if the error is related to file access or database
-        if (error.code === 'ENOENT') {
-            res.status(404).json({ message: 'File not found' });
-        } else {
-            res.status(500).json({ message: 'Error processing Excel file', error: error.message });
-        }
+        res.status(500).json({ message: 'Error processing Excel file', error: error.message, stack: error.stack });
     }
 };
+
 
 // Save CGPA results and total scores
 exports.saveCGPAResults = async (req, res) => {
