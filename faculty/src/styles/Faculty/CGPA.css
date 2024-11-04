@@ -1,0 +1,82 @@
+.cgpa-container {
+    max-width: 800px; /* Limit width of the container */
+    margin: 0 auto; /* Center the container */
+    padding: 20px; /* Add padding */
+    background-color: #f9f9f9; /* Light background color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.cgpa-header {
+    display: flex; /* Use flexbox for header layout */
+    justify-content: space-between; /* Space out header items */
+    align-items: center; /* Center items vertically */
+    margin-bottom: 20px; /* Spacing below header */
+}
+
+.cgpa-header h2 {
+    font-size: 24px; /* Font size for the header */
+    color: #333; /* Dark color for the text */
+}
+
+.cgpa-control-button {
+    padding: 10px 15px; /* Padding for the button */
+    font-size: 16px; /* Font size */
+    color: #fff; /* White text color */
+    background-color: #007bff; /* Bootstrap primary color */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer on hover */
+    transition: background-color 0.3s; /* Transition effect */
+}
+
+.cgpa-control-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.search-form {
+    margin-top: 20px; /* Spacing above the form */
+    border: 1px solid #ccc; /* Light border */
+    border-radius: 4px; /* Rounded corners */
+    padding: 20px; /* Padding inside the form */
+    background-color: #fff; /* White background for form */
+}
+
+.form-group {
+    margin-bottom: 15px; /* Spacing between form groups */
+}
+
+label {
+    display: block; /* Labels on new line */
+    margin-bottom: 5px; /* Spacing below label */
+    font-weight: bold; /* Bold font */
+    color: #555; /* Dark grey color */
+}
+
+select, input[type="text"] {
+    width: 100%; /* Full width */
+    padding: 10px; /* Padding inside input */
+    border: 1px solid #ccc; /* Light border */
+    border-radius: 4px; /* Rounded corners */
+    font-size: 16px; /* Font size */
+}
+
+input[type="text"]:focus, select:focus {
+    border-color: #007bff; /* Highlight border on focus */
+    outline: none; /* Remove default outline */
+}
+
+.search-button {
+    padding: 10px 15px; /* Padding for search button */
+    font-size: 16px; /* Font size */
+    color: #fff; /* White text color */
+    background-color: #28a745; /* Bootstrap success color */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer on hover */
+    transition: background-color 0.3s; /* Transition effect */
+}
+
+.search-button:hover {
+    background-color: #218838; /* Darker green on hover */
+}

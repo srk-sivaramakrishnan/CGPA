@@ -1,0 +1,27 @@
+.cgpa-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+.cgpa-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.cgpa-table th,
+.cgpa-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.cgpa-table th {
+    background-color: #f2f2f2;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}

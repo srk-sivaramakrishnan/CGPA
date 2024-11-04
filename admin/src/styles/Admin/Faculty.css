@@ -1,0 +1,23 @@
+/* faculty.css */
+.faculty-container {
+    position: relative; /* Set position relative for the container */
+    padding: 20px; /* Add padding for the content */
+    background-color: white; /* Background color for the content area */
+}
+
+.add-faculty-button {
+    position: absolute; /* Position the button absolutely */
+    top: 20px; /* Distance from the top */
+    right: 20px; /* Distance from the right */
+    padding: 10px 20px; /* Padding for the button */
+    background-color: #2c3e50; /* Button background color */
+    color: white; /* Button text color */
+    border: none; /* Remove default border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Change cursor to pointer */
+    transition: background-color 0.3s; /* Smooth background transition */
+}
+
+.add-faculty-button:hover {
+    background-color: #34495e; /* Darker background on hover */
+}
