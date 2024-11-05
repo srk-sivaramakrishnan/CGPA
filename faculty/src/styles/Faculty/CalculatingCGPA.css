@@ -78,7 +78,11 @@
   .modal-table-container {
     max-height: 400px; /* Set a max height for the modal table */
     overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: auto; /* Enable horizontal scrolling */
     margin-top: 20px;
+    border: 1px solid #ddd; /* Optional: Add border for visual separation */
+    border-radius: 4px; /* Optional: Add rounded corners */
+    background-color: white; /* Ensure the background is white for readability */
   }
   
   table {

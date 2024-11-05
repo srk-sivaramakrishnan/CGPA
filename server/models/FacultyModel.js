@@ -41,29 +41,47 @@ const upsertSubjects = async (subjects) => {
     return pool.query(query, [values]);
 };
 
+// Function to upsert grades into the database
+const upsertGrades = async (grades) => {
+    const insertQueries = grades.map((gradeData) => {
+      return gradeData.subjectCodes.map((subjectCode, index) => {
+        return [
+          gradeData.rollNo,
+          gradeData.registerNumber,
+          gradeData.studentName,
+          subjectCode,
+          gradeData.grades[index],
+          gradeData.semester,
+          gradeData.department,
+          gradeData.year,
+          gradeData.section,
+          gradeData.batch,
+        ];
+      });
+    }).flat();
   
-  // Function to insert or update grades
-  const upsertGrades = async (grades) => {
-    const query = `
-      INSERT INTO Grades (\`Roll No\`, \`Register Number\`, \`Student Name\`, \`Subject Code\`, Grade, Semester, Department, Year, Section, Batch)
-      VALUES ?
-      ON DUPLICATE KEY UPDATE Grade = VALUES(Grade);
+    const insertStatement = `
+      INSERT INTO Grades (
+        \`Roll No\`, \`Register Number\`, \`Student Name\`, \`Subject Code\`, \`Grade\`,
+        \`Semester\`, \`Department\`, \`Year\`, \`Section\`, \`Batch\`
+      ) VALUES ? 
+      ON DUPLICATE KEY UPDATE 
+        \`Grade\` = VALUES(\`Grade\`),
+        \`Semester\` = VALUES(\`Semester\`),
+        \`Department\` = VALUES(\`Department\`),
+        \`Year\` = VALUES(\`Year\`),
+        \`Section\` = VALUES(\`Section\`),
+        \`Batch\` = VALUES(\`Batch\`);
     `;
-    const values = grades.map(grade => [
-      grade.rollNo,
-      grade.registerNumber,
-      grade.studentName,
-      grade.subjectCode,
-      grade.grade,
-      grade.semester,
-      grade.department,
-      grade.year,
-      grade.section,
-      grade.batch
-    ]);
-    return pool.query(query, [values]);
-  };
   
+    try {
+      await pool.query(insertStatement, [insertQueries]);
+    } catch (error) {
+      console.error('Error upserting grades into DB:', error);
+      throw error; // Propagate the error for the controller to handle
+    }
+  };
+
 // Fetch CGPA results with calculated CGPA for each student based on cumulative semester scores and credits
 const getCumulativeCGPA = async (category, filterValue) => {
     try {

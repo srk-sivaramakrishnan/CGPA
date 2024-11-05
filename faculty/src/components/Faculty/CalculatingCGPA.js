@@ -15,7 +15,8 @@ function CalculatingCGPA() {
   const [section, setSection] = useState('');
   const [batch, setBatch] = useState('');
   const [file, setFile] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubjectsModalOpen, setIsSubjectsModalOpen] = useState(false);
+  const [isGradesModalOpen, setIsGradesModalOpen] = useState(false);
   const [excelData, setExcelData] = useState([]);
   const [isPreviewSubjects, setIsPreviewSubjects] = useState(true);
 
@@ -36,8 +37,10 @@ function CalculatingCGPA() {
     maxFiles: 1,
   });
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openSubjectsModal = () => setIsSubjectsModalOpen(true);
+  const closeSubjectsModal = () => setIsSubjectsModalOpen(false);
+  const openGradesModal = () => setIsGradesModalOpen(true);
+  const closeGradesModal = () => setIsGradesModalOpen(false);
 
   const parseExcelFile = (file) => {
     const reader = new FileReader();
@@ -50,9 +53,10 @@ function CalculatingCGPA() {
       const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
       const filteredData = data.filter(row => row.some(cell => cell !== ""));
 
-      if (filteredData.length > 1) {
+      if (filteredData.length > 2) { // Ensure there's enough data
         setExcelData(filteredData);
-        openModal();
+        console.log("Parsed Excel Data:", filteredData); // Log the parsed data
+        openSubjectsModal();
       } else {
         alert("No valid data found in the uploaded file.");
       }
@@ -62,30 +66,73 @@ function CalculatingCGPA() {
 
   const handleNext = async () => {
     setIsPreviewSubjects(false);
-  
-    // Extract subject data from the previewed modal rows
+
     const subjects = excelData[0].slice(3).map((subjectCode, index) => ({
       subjectCode,
       subjectName: excelData[1][index + 3],
       credits: excelData[2][index + 3],
     }));
-  
+
     try {
-      // Insert only the displayed subjects
       await axios.post(`${baseURL}/faculty/upload-subjects`, { subjects }, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       console.log('Subjects uploaded successfully');
+      closeSubjectsModal();
+      openGradesModal();
     } catch (error) {
       console.error('Error uploading subjects:', error);
       alert('Failed to upload subjects. Please try again.');
     }
   };
-  
 
   const handlePrevious = () => {
     setIsPreviewSubjects(true);
   };
+
+  const chunkArray = (array, size) => {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  };
+  
+
+  const uploadGrades = async () => {
+    const grades = excelData.slice(3).map((row) => {
+      return {
+        rollNo: row[0],
+        registerNumber: row[1],
+        studentName: row[2],
+        subjectCodes: excelData[0].slice(3), // Array of subject codes
+        grades: row.slice(3), // Array of grades
+        semester,
+        department,
+        year: facultyClass,
+        section,
+        batch,
+      };
+    });
+  
+    // Chunk the grades array into chunks of 10
+    const gradeChunks = chunkArray(grades, 10);
+  
+    try {
+      for (const chunk of gradeChunks) {
+        await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk }, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        console.log('Grades chunk uploaded successfully:', chunk);
+      }
+      console.log('All grades uploaded successfully');
+      closeGradesModal();
+    } catch (error) {
+      console.error('Error uploading grades:', error);
+      alert('Failed to upload grades. Please try again.');
+    }
+  };
+  
 
   return (
     <div className="calculating-cgpa-container">
@@ -156,16 +203,17 @@ function CalculatingCGPA() {
         {file && <p>Selected file: {file.name}</p>}
       </div>
 
+      {/* First Modal for Subjects */}
       <Modal
-        isOpen={isModalOpen}
-        onRequestClose={closeModal}
-        contentLabel="Excel Data Preview"
+        isOpen={isSubjectsModalOpen}
+        onRequestClose={closeSubjectsModal}
+        contentLabel="Subjects Preview"
         className="modal"
         overlayClassName="modal-overlay"
       >
         <div className="modal-content">
-          <h2>Excel Data Preview</h2>
-          <button className="close-modal" onClick={closeModal}>&times;</button>
+          <h2>Subjects Preview</h2>
+          <button className="close-modal" onClick={closeSubjectsModal}>&times;</button>
           <div className="modal-table-container">
             {isPreviewSubjects && (
               <>
@@ -194,6 +242,51 @@ function CalculatingCGPA() {
           <div className="modal-navigation">
             <button className="previous-button" onClick={handlePrevious}>Previous</button>
             <button className="next-button" onClick={handleNext}>Next</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Second Modal for Grades */}
+      <Modal
+        isOpen={isGradesModalOpen}
+        onRequestClose={closeGradesModal}
+        contentLabel="Grades Preview"
+        className="modal"
+        overlayClassName="modal-overlay"
+      >
+        <div className="modal-content">
+          <h2>Grades Preview</h2>
+          <button className="close-modal" onClick={closeGradesModal}>&times;</button>
+          <div className="modal-table-container">
+            <h3>Grades</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Register No</th>
+                  <th>Student Name</th>
+                  {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
+                    <th key={index}>{subjectCode}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {excelData.slice(3).map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    <td>{row[0]}</td>
+                    <td>{row[1]}</td>
+                    <td>{row[2]}</td>
+                    {row.slice(3).map((grade, index) => (
+                      <td key={index}>{grade}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="modal-navigation">
+            <button className="submit-button" onClick={uploadGrades}>Submit Grades</button>
+            <button className="close-modal" onClick={closeGradesModal}>Close</button>
           </div>
         </div>
       </Modal>
