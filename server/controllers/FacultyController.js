@@ -24,7 +24,7 @@ exports.login = async (req, res) => {
         const token = jwt.sign(
             { id: faculty.id, facultyId: faculty[`Faculty Id`] }, // Payload
             process.env.SECRET_KEY, // Secret key from .env
-            { expiresIn: '1h' } // Token expiration time
+            { expiresIn: '2h' } // Token expiration time
         );
 
         res.status(200).json({ message: 'Login successful', token }); // Return the token
@@ -84,7 +84,25 @@ exports.uploadGrades = async (req, res) => {
       console.error('Error uploading grades:', error);
       res.status(500).json({ message: 'Server error' });
     }
-  };
+};
+
+// Controller function to upsert GPA data in `cgpa_calculation`
+exports.storeCgpaCalculation = async (req, res) => {
+    const { gpaData } = req.body;
+  
+    try {
+      const result = await facultyModel.upsertCgpaCalculation(gpaData);
+  
+      if (result.success) {
+        res.status(200).json({ message: 'GPA results stored successfully!' });
+      } else {
+        res.status(500).json({ error: 'Failed to store GPA results. Please try again.' });
+      }
+    } catch (error) {
+      console.error('Error in FacultyController:', error);
+      res.status(500).json({ error: 'An error occurred while storing GPA results.' });
+    }
+};
 
 // Controller to fetch cumulative CGPA results with optional filters
 exports.getCumulativeCGPA = async (req, res) => {

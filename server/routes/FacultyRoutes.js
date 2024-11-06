@@ -16,6 +16,9 @@ router.post('/upload-subjects', authenticateToken, FacultyController.uploadSubje
 // Route to upload grades
 router.post('/upload-grades', authenticateToken, FacultyController.uploadGrades);
 
+// Endpoint to store GPA results in `cgpa_calculation` table
+router.post('/store-cgpa-calculation',  authenticateToken, FacultyController.storeCgpaCalculation);
+
 // Route for getting CGPA calculation
 router.get('/cgpa-calculation', authenticateToken, FacultyController.getCumulativeCGPA);
 

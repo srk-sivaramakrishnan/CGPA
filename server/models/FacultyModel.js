@@ -82,6 +82,54 @@ const upsertGrades = async (grades) => {
     }
   };
 
+// Upsert function to store or update GPA data in `cgpa_calculation`
+const upsertCgpaCalculation = async (gpaData) => {
+    try {
+      for (const data of gpaData) {
+        // Check if entry with the same Roll No, Register Number, and Semester exists
+        const [existingRecord] = await pool.query(
+          `SELECT * FROM cgpa_calculation WHERE \`Roll No\` = ? AND \`Register Number\` = ? AND \`Semester\` = ?`,
+          [data.rollNo, data.registerNumber, data.semester]
+        );
+  
+        if (existingRecord.length > 0) {
+          // If exists, update the existing record
+          await pool.query(
+            `UPDATE cgpa_calculation
+             SET \`Total Score\` = ?, \`Total Credits\` = ?
+             WHERE \`Roll No\` = ? AND \`Register Number\` = ? AND \`Semester\` = ?`,
+            [
+              data.totalScore,
+              data.totalCredits,
+              data.rollNo,
+              data.registerNumber,
+              data.semester,
+            ]
+          );
+        } else {
+          // If no record found, insert a new entry
+          await pool.query(
+            `INSERT INTO cgpa_calculation (\`Roll No\`, \`Register Number\`, \`Student Name\`, \`Semester\`, \`Total Score\`, \`Total Credits\`)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              data.rollNo,
+              data.registerNumber,
+              data.studentName,
+              data.semester,
+              data.totalScore,
+              data.totalCredits,
+            ]
+          );
+        }
+      }
+  
+      return { success: true };
+    } catch (error) {
+      console.error('Error upserting GPA data:', error);
+      throw error;
+    }
+  };
+  
 // Fetch CGPA results with calculated CGPA for each student based on cumulative semester scores and credits
 const getCumulativeCGPA = async (category, filterValue) => {
     try {
@@ -129,5 +177,6 @@ module.exports = {
     findFacultyProfile,
     upsertSubjects,
     upsertGrades,
+    upsertCgpaCalculation,
     getCumulativeCGPA, // Export the new function
 };
