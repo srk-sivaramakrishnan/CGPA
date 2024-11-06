@@ -104,7 +104,7 @@ exports.storeCgpaCalculation = async (req, res) => {
     }
 };
 
-// Controller to fetch cumulative CGPA results with optional filters
+// Controller to fetch cumulative CGPA results with optional fillters
 exports.getCumulativeCGPA = async (req, res) => {
     const { category, filterValue, department, section, batch } = req.query; // Destructure query parameters
 

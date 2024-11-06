@@ -136,7 +136,7 @@ const upsertCgpaCalculation = async (gpaData) => {
     }
   };
   
-// Fetch CGPA results with calculated CGPA for each student based on cumulative semester scores and credits
+// Fetch CGPA results with calculated CGPA for each student based on cumulative semester scores and cred.its
 const getCumulativeCGPA = async (category, filterValue, department, section, batch) => {
     try {
         // Adjusted query to fetch CGPA results

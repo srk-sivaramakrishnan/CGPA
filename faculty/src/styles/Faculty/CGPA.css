@@ -109,7 +109,7 @@
     cursor: pointer;
 }
 
-/* Animation for modal fade-in */
+/* Animation for modakl fade-in */
 @keyframes modal-fade-in {
     from {
         opacity: 0;

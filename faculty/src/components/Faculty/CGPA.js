@@ -190,19 +190,19 @@ function CGPA() {
 
             {/* Modal for displaying fetched data */}
             {isModalOpen && (
-    <div className="cgpa-modal-overlay">
-        <div className="cgpa-modal-content">
-            <button className="cgpa-close-modal" onClick={closeModal}>
-                &times;
-            </button>
-            <h3>Student Details</h3>
-            <p><strong>Roll No:</strong> {modalData['Roll No']}</p>
-            <p><strong>Register No:</strong> {modalData['Register Number']}</p>
-            <p><strong>Student Name:</strong> {modalData['Student Name']}</p>
-            <p><strong>CGPA:</strong> {modalData.CGPA}</p>
-        </div>
-    </div>
-)}
+                <div className="cgpa-modal-overlay">
+                    <div className="cgpa-modal-content">
+                        <button className="cgpa-close-modal" onClick={closeModal}>
+                            &times;
+                        </button>
+                        <h3>Student Details</h3>
+                        <p><strong>Roll No:</strong> {modalData['Roll No']}</p>
+                        <p><strong>Register No:</strong> {modalData['Register Number']}</p>
+                        <p><strong>Student Name:</strong> {modalData['Student Name']}</p>
+                        <p><strong>CGPA:</strong> {modalData.CGPA}</p>
+                    </div>
+                </div>
+            )}
 
 
         </div>
