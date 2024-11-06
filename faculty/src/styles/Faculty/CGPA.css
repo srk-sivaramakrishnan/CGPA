@@ -1,82 +1,120 @@
 .cgpa-container {
-    max-width: 800px; /* Limit width of the container */
-    margin: 0 auto; /* Center the container */
-    padding: 20px; /* Add padding */
-    background-color: #f9f9f9; /* Light background color */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    font-family: Arial, sans-serif;
+    padding: 20px;
 }
 
 .cgpa-header {
-    display: flex; /* Use flexbox for header layout */
-    justify-content: space-between; /* Space out header items */
-    align-items: center; /* Center items vertically */
-    margin-bottom: 20px; /* Spacing below header */
-}
-
-.cgpa-header h2 {
-    font-size: 24px; /* Font size for the header */
-    color: #333; /* Dark color for the text */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 .cgpa-control-button {
-    padding: 10px 15px; /* Padding for the button */
-    font-size: 16px; /* Font size */
-    color: #fff; /* White text color */
-    background-color: #007bff; /* Bootstrap primary color */
-    border: none; /* No border */
-    border-radius: 4px; /* Rounded corners */
-    cursor: pointer; /* Pointer on hover */
-    transition: background-color 0.3s; /* Transition effect */
-}
-
-.cgpa-control-button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
 
 .search-form {
-    margin-top: 20px; /* Spacing above the form */
-    border: 1px solid #ccc; /* Light border */
-    border-radius: 4px; /* Rounded corners */
-    padding: 20px; /* Padding inside the form */
-    background-color: #fff; /* White background for form */
+    margin-bottom: 20px;
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 8px;
 }
 
 .form-group {
-    margin-bottom: 15px; /* Spacing between form groups */
+    margin-bottom: 15px;
 }
 
-label {
-    display: block; /* Labels on new line */
-    margin-bottom: 5px; /* Spacing below label */
-    font-weight: bold; /* Bold font */
-    color: #555; /* Dark grey color */
+.form-group label {
+    display: block;
+    font-weight: bold;
 }
 
-select, input[type="text"] {
-    width: 100%; /* Full width */
-    padding: 10px; /* Padding inside input */
-    border: 1px solid #ccc; /* Light border */
-    border-radius: 4px; /* Rounded corners */
-    font-size: 16px; /* Font size */
-}
-
-input[type="text"]:focus, select:focus {
-    border-color: #007bff; /* Highlight border on focus */
-    outline: none; /* Remove default outline */
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
 
 .search-button {
-    padding: 10px 15px; /* Padding for search button */
-    font-size: 16px; /* Font size */
-    color: #fff; /* White text color */
-    background-color: #28a745; /* Bootstrap success color */
-    border: none; /* No border */
-    border-radius: 4px; /* Rounded corners */
-    cursor: pointer; /* Pointer on hover */
-    transition: background-color 0.3s; /* Transition effect */
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
 
-.search-button:hover {
-    background-color: #218838; /* Darker green on hover */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th,
+.results-table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.results-table th {
+    background-color: #f2f2f2;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Modal Styles */
+.cgpa-modal-overlay {
+    position: fixed; /* Make sure it's always centered, even if the page scrolls */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's above the page content */
+}
+
+.cgpa-modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%; /* To handle smaller screen sizes */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    animation: modal-fade-in 0.3s ease-out;
+}
+
+/* Close button styles */
+.cgpa-close-modal {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Animation for modal fade-in */
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }

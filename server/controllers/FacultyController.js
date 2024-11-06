@@ -106,13 +106,19 @@ exports.storeCgpaCalculation = async (req, res) => {
 
 // Controller to fetch cumulative CGPA results with optional filters
 exports.getCumulativeCGPA = async (req, res) => {
-    const { category, filterValue } = req.query; // Destructure query parameters
+    const { category, filterValue, department, section, batch } = req.query; // Destructure query parameters
 
     try {
-        const results = await facultyModel.getCumulativeCGPA(category, filterValue); // Pass parameters to the model
+        const results = await facultyModel.getCumulativeCGPA(
+            category, 
+            filterValue, 
+            department, 
+            section, 
+            batch
+        );
         res.status(200).json(results);
     } catch (error) {
         console.error('Error fetching cumulative CGPA results:', error);
-        res.status(500).json({ message: error.message });  // Return specific error message
+        res.status(500).json({ message: error.message });
     }
 };

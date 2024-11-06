@@ -1,3 +1,5 @@
+// CGPA.js
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -12,10 +14,11 @@ function CGPA() {
     const [searchValue, setSearchValue] = useState('');
     const [results, setResults] = useState([]); // State for storing fetched results
     const [error, setError] = useState(''); // State for handling errors
+    const [isModalOpen, setIsModalOpen] = useState(false); // Modal open state
+    const [modalData, setModalData] = useState({}); // Data for the modal
 
     // State variables for classwise search
     const [department, setDepartment] = useState('');
-    const [facultyClass, setFacultyClass] = useState('');
     const [section, setSection] = useState('');
     const [batch, setBatch] = useState('');
 
@@ -31,20 +34,14 @@ function CGPA() {
 
             // Add additional filters for classwise search
             if (searchCategory === 'classwise') {
-                params = {
-                    ...params,
-                    department,
-                    facultyClass,
-                    section,
-                    batch
-                };
+                params = { ...params, department, section, batch };
             }
 
             const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
                 params: params,
                 headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                    Authorization: `Bearer ${token}`,
+                },
             });
             setResults(response.data);
             setError('');
@@ -52,6 +49,16 @@ function CGPA() {
             console.error('Error fetching CGPA results:', error);
             setError('Failed to fetch CGPA results.');
         }
+    };
+
+
+    const handleRowClick = (data) => {
+        setModalData(data);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
     };
 
     return (
@@ -96,7 +103,12 @@ function CGPA() {
                     <>
                         <div className="form-group">
                             <label htmlFor="department">Department:</label>
-                            <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required>
+                            <select
+                                id="department"
+                                value={department}
+                                onChange={(e) => setDepartment(e.target.value)}
+                                required
+                            >
                                 <option value="">Select Department</option>
                                 <option value="CSE">CSE</option>
                                 <option value="ECE">ECE</option>
@@ -107,19 +119,13 @@ function CGPA() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="facultyClass">Class:</label>
-                            <select id="facultyClass" value={facultyClass} onChange={(e) => setFacultyClass(e.target.value)} required>
-                                <option value="">Select Class</option>
-                                <option value="1st Year">1st Year</option>
-                                <option value="2nd Year">2nd Year</option>
-                                <option value="3rd Year">3rd Year</option>
-                                <option value="4th Year">4th Year</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group">
                             <label htmlFor="section">Section:</label>
-                            <select id="section" value={section} onChange={(e) => setSection(e.target.value)} required>
+                            <select
+                                id="section"
+                                value={section}
+                                onChange={(e) => setSection(e.target.value)}
+                                required
+                            >
                                 <option value="">Select Section</option>
                                 <option value="A">A</option>
                                 <option value="B">B</option>
@@ -128,7 +134,12 @@ function CGPA() {
 
                         <div className="form-group">
                             <label htmlFor="batch">Batch:</label>
-                            <select id="batch" value={batch} onChange={(e) => setBatch(e.target.value)} required>
+                            <select
+                                id="batch"
+                                value={batch}
+                                onChange={(e) => setBatch(e.target.value)}
+                                required
+                            >
                                 <option value="">Select Batch</option>
                                 <option value="2021-2025">2021-2025</option>
                                 <option value="2022-2026">2022-2026</option>
@@ -159,7 +170,11 @@ function CGPA() {
                         </thead>
                         <tbody>
                             {results.map((result, index) => (
-                                <tr key={index}>
+                                <tr
+                                    key={index}
+                                    onClick={() => handleRowClick(result)}
+                                    className="clickable-row"
+                                >
                                     <td>{result['Roll No']}</td>
                                     <td>{result['Register Number']}</td>
                                     <td>{result['Student Name']}</td>
@@ -172,6 +187,24 @@ function CGPA() {
                     <p>No results found.</p>
                 )}
             </div>
+
+            {/* Modal for displaying fetched data */}
+            {isModalOpen && (
+    <div className="cgpa-modal-overlay">
+        <div className="cgpa-modal-content">
+            <button className="cgpa-close-modal" onClick={closeModal}>
+                &times;
+            </button>
+            <h3>Student Details</h3>
+            <p><strong>Roll No:</strong> {modalData['Roll No']}</p>
+            <p><strong>Register No:</strong> {modalData['Register Number']}</p>
+            <p><strong>Student Name:</strong> {modalData['Student Name']}</p>
+            <p><strong>CGPA:</strong> {modalData.CGPA}</p>
+        </div>
+    </div>
+)}
+
+
         </div>
     );
 }

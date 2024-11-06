@@ -197,37 +197,41 @@ function ManageCGPA() {
     }
   };
   
-  const storeGpaResults = async () => {
-    // No loading state, remove setLoading logic
-  
-    // Simulate loading delay of 3 seconds
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  
-    const gpaData = gpaResults.map(result => ({
-      rollNo: result.rollNo,
-      registerNumber: result.registerNumber,
-      studentName: result.studentName,
-      semester,
-      totalScore: result.totalScore,
-      totalCredits: result.totalCredits,
-    }));
-  
-    const chunkedData = chunkArray(gpaData, 10); // Split data into chunks of 10
-  
-    try {
-      for (const chunk of chunkedData) {
-        await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData: chunk }, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        console.log('Batch stored successfully!');
-      }
-      alert('GPA results stored successfully!');
-      closeStoreGpaModal();
-    } catch (error) {
-      console.error('Error storing GPA results:', error);
-      alert('Failed to store GPA results. Please try again.');
+const storeGpaResults = async () => {
+  // No loading state, remove setLoading logic
+
+  // Simulate loading delay of 3 seconds
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  const gpaData = gpaResults.map(result => ({
+    rollNo: result.rollNo,
+    registerNumber: result.registerNumber,
+    studentName: result.studentName,
+    semester,
+    totalScore: result.totalScore,
+    totalCredits: result.totalCredits,
+    department,  // Include department value
+    section,     // Include section value
+    batch,       // Include batch value
+  }));
+
+  const chunkedData = chunkArray(gpaData, 10); // Split data into chunks of 10
+
+  try {
+    for (const chunk of chunkedData) {
+      await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData: chunk }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      console.log('Batch stored successfully!');
     }
-  };
+    alert('GPA results stored successfully!');
+    closeStoreGpaModal();
+  } catch (error) {
+    console.error('Error storing GPA results:', error);
+    alert('Failed to store GPA results. Please try again.');
+  }
+};
+
   
     return (
       <div className="calculating-cgpa-container">

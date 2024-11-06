@@ -96,11 +96,14 @@ const upsertCgpaCalculation = async (gpaData) => {
           // If exists, update the existing record
           await pool.query(
             `UPDATE cgpa_calculation
-             SET \`Total Score\` = ?, \`Total Credits\` = ?
+             SET \`Total Score\` = ?, \`Total Credits\` = ?, \`Department\` = ?, \`Section\` = ?, \`Batch\` = ?
              WHERE \`Roll No\` = ? AND \`Register Number\` = ? AND \`Semester\` = ?`,
             [
               data.totalScore,
               data.totalCredits,
+              data.department,  // Update department
+              data.section,     // Update section
+              data.batch,       // Update batch
               data.rollNo,
               data.registerNumber,
               data.semester,
@@ -109,8 +112,8 @@ const upsertCgpaCalculation = async (gpaData) => {
         } else {
           // If no record found, insert a new entry
           await pool.query(
-            `INSERT INTO cgpa_calculation (\`Roll No\`, \`Register Number\`, \`Student Name\`, \`Semester\`, \`Total Score\`, \`Total Credits\`)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO cgpa_calculation (\`Roll No\`, \`Register Number\`, \`Student Name\`, \`Semester\`, \`Total Score\`, \`Total Credits\`, \`Department\`, \`Section\`, \`Batch\`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               data.rollNo,
               data.registerNumber,
@@ -118,6 +121,9 @@ const upsertCgpaCalculation = async (gpaData) => {
               data.semester,
               data.totalScore,
               data.totalCredits,
+              data.department,  // Insert department
+              data.section,     // Insert section
+              data.batch,       // Insert batch
             ]
           );
         }
@@ -131,9 +137,9 @@ const upsertCgpaCalculation = async (gpaData) => {
   };
   
 // Fetch CGPA results with calculated CGPA for each student based on cumulative semester scores and credits
-const getCumulativeCGPA = async (category, filterValue) => {
+const getCumulativeCGPA = async (category, filterValue, department, section, batch) => {
     try {
-        // Adjusted query to fetch only necessary columns
+        // Adjusted query to fetch CGPA results
         let query = `
             SELECT 
                 \`Roll No\`, 
@@ -148,13 +154,15 @@ const getCumulativeCGPA = async (category, filterValue) => {
         `;
 
         if (category && filterValue) {
-            const validCategories = {
-                rollNo: '`Roll No`',
-                registerNo: '`Register Number`'
-            };
+            if (category === 'rollNo' || category === 'registerNo') {
+                const validCategories = {
+                    rollNo: '`Roll No`',
+                    registerNo: '`Register Number`'
+                };
 
-            if (validCategories[category]) {
                 query += ` WHERE ${validCategories[category]} = ?`;
+            } else if (category === 'classwise') {
+                query += ` WHERE department = ? AND section = ? AND batch = ?`;
             } else {
                 throw new Error('Invalid category');
             }
@@ -162,14 +170,17 @@ const getCumulativeCGPA = async (category, filterValue) => {
 
         query += ` GROUP BY \`Roll No\`, \`Register Number\`, \`Student Name\``;
 
-        const [rows] = await pool.query(query, [filterValue]);
+        const params = category === 'classwise' 
+            ? [department, section, batch] 
+            : [filterValue];
+
+        const [rows] = await pool.query(query, params);
         return rows;
     } catch (error) {
         console.error('Error fetching cumulative CGPA:', error);
         throw new Error('Error fetching cumulative CGPA data');
     }
 };
-
 
 // Export the functions
 module.exports = {
