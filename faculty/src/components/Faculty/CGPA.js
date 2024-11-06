@@ -13,6 +13,12 @@ function CGPA() {
     const [results, setResults] = useState([]); // State for storing fetched results
     const [error, setError] = useState(''); // State for handling errors
 
+    // State variables for classwise search
+    const [department, setDepartment] = useState('');
+    const [facultyClass, setFacultyClass] = useState('');
+    const [section, setSection] = useState('');
+    const [batch, setBatch] = useState('');
+
     const handleManageCGPAClick = () => {
         navigate('/dashboard/cgpa/manage'); // Navigate to Manage CGPA page
     };
@@ -21,8 +27,21 @@ function CGPA() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
+            let params = { category: searchCategory, filterValue: searchValue };
+
+            // Add additional filters for classwise search
+            if (searchCategory === 'classwise') {
+                params = {
+                    ...params,
+                    department,
+                    facultyClass,
+                    section,
+                    batch
+                };
+            }
+
             const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
-                params: { category: searchCategory, filterValue: searchValue },
+                params: params,
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -54,21 +73,71 @@ function CGPA() {
                     >
                         <option value="rollNo">Roll No</option>
                         <option value="registerNo">Register No</option>
+                        <option value="classwise">Classwise</option>
                     </select>
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="search-value">
-                        Enter {searchCategory === 'rollNo' ? 'Roll No' : 'Register No'}:
-                    </label>
-                    <input
-                        type="text"
-                        id="search-value"
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        required
-                    />
-                </div>
+                {searchCategory !== 'classwise' && (
+                    <div className="form-group">
+                        <label htmlFor="search-value">
+                            Enter {searchCategory === 'rollNo' ? 'Roll No' : 'Register No'}:
+                        </label>
+                        <input
+                            type="text"
+                            id="search-value"
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            required
+                        />
+                    </div>
+                )}
+
+                {searchCategory === 'classwise' && (
+                    <>
+                        <div className="form-group">
+                            <label htmlFor="department">Department:</label>
+                            <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required>
+                                <option value="">Select Department</option>
+                                <option value="CSE">CSE</option>
+                                <option value="ECE">ECE</option>
+                                <option value="EEE">EEE</option>
+                                <option value="ME">ME</option>
+                                <option value="CE">CE</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="facultyClass">Class:</label>
+                            <select id="facultyClass" value={facultyClass} onChange={(e) => setFacultyClass(e.target.value)} required>
+                                <option value="">Select Class</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="section">Section:</label>
+                            <select id="section" value={section} onChange={(e) => setSection(e.target.value)} required>
+                                <option value="">Select Section</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="batch">Batch:</label>
+                            <select id="batch" value={batch} onChange={(e) => setBatch(e.target.value)} required>
+                                <option value="">Select Batch</option>
+                                <option value="2021-2025">2021-2025</option>
+                                <option value="2022-2026">2022-2026</option>
+                                <option value="2023-2027">2023-2027</option>
+                                <option value="2024-2028">2024-2028</option>
+                            </select>
+                        </div>
+                    </>
+                )}
 
                 <button type="submit" className="search-button">
                     Search
