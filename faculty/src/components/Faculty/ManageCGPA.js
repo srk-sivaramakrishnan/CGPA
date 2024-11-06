@@ -135,69 +135,73 @@ function ManageCGPA() {
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     const grades = excelData.slice(3).map((row) => {
-      return {
-        rollNo: row[0],
-        registerNumber: row[1],
-        studentName: row[2],
-        subjectCodes: excelData[0].slice(3),
-        grades: row.slice(3),
-        semester,
-        department,
-        year: facultyClass,
-        section,
-        batch,
-      };
+        return {
+            rollNo: row[0],
+            registerNumber: row[1],
+            studentName: row[2],
+            subjectCodes: excelData[0].slice(3),
+            grades: row.slice(3),
+            semester,
+            department,
+            year: facultyClass,
+            section,
+            batch,
+        };
     });
 
     const creditsRow = excelData[2];
     const credits = creditsRow.slice(3);
 
-    const calculatedTotalCredits = credits.reduce((acc, curr) => acc + Number(curr), 0);
-
     const gradeChunks = chunkArray(grades, 10);
 
     try {
-      for (const chunk of gradeChunks) {
-        await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk }, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-      }
+        for (const chunk of gradeChunks) {
+            await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+        }
 
-      const calculatedGpaResults = gradeChunks.flatMap((chunk) =>
-        chunk.map((grade) => {
-          let totalScore = 0;
+        const calculatedGpaResults = gradeChunks.flatMap((chunk) =>
+            chunk.map((grade) => {
+                let totalScore = 0;
+                let totalCredits = 0;
 
-          grade.subjectCodes.forEach((subjectCode, index) => {
-            const subjectCredit = parseFloat(credits[index]);
-            const gradePoint = gradePoints[grade.grades[index]] || 0;
-            totalScore += gradePoint * subjectCredit;
-          });
+                grade.subjectCodes.forEach((subjectCode, index) => {
+                    const subjectCredit = parseFloat(credits[index]);
+                    const gradePoint = gradePoints[grade.grades[index]] || 0;
 
-          const gpa = calculatedTotalCredits > 0 ? totalScore / calculatedTotalCredits : 0;
+                    // Skip if grade is "U" (ungraded)
+                    if (grade.grades[index] !== 'U') {
+                        totalScore += gradePoint * subjectCredit;
+                        totalCredits += subjectCredit;
+                    }
+                });
 
-          return {
-            rollNo: grade.rollNo,
-            registerNumber: grade.registerNumber,
-            studentName: grade.studentName,
-            totalScore,
-            gpa: gpa.toFixed(2),
-            totalCredits: calculatedTotalCredits
-          };
-        })
-      );
+                const gpa = totalCredits > 0 ? totalScore / totalCredits : 0;
 
-      setGpaResults(calculatedGpaResults);
-      closeGradesModal();
-      openStoreGpaModal(); // Open Store GPA modal after uploading grades
+                return {
+                    rollNo: grade.rollNo,
+                    registerNumber: grade.registerNumber,
+                    studentName: grade.studentName,
+                    totalScore,
+                    gpa: gpa.toFixed(2),
+                    totalCredits,
+                };
+            })
+        );
+
+        setGpaResults(calculatedGpaResults);
+        closeGradesModal();
+        openStoreGpaModal(); // Open Store GPA modal after uploading grades
     } catch (error) {
-      console.error('Error uploading grades:', error);
-      alert('Failed to upload grades. Please try again.');
+        console.error('Error uploading grades:', error);
+        alert('Failed to upload grades. Please try again.');
     } finally {
-      setLoading(false); // End loading after uploading grades
+        setLoading(false); // End loading after uploading grades
     }
-  };
+};
 
-  const storeGpaResults = async () => {
+const storeGpaResults = async () => {
     // No loading state, remove setLoading logic
 
     // Simulate loading delay of 3 seconds
@@ -230,7 +234,7 @@ function ManageCGPA() {
       console.error('Error storing GPA results:', error);
       alert('Failed to store GPA results. Please try again.');
     }
-  };
+};
 
 
   return (

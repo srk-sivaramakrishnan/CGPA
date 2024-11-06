@@ -99,16 +99,16 @@ const upsertCgpaCalculation = async (gpaData) => {
              SET \`Total Score\` = ?, \`Total Credits\` = ?, \`Department\` = ?, \`Section\` = ?, \`Batch\` = ?
              WHERE \`Roll No\` = ? AND \`Register Number\` = ? AND \`Semester\` = ?`,
             [
-              data.totalScore,
-              data.totalCredits,
-              data.department,  // Update department
-              data.section,     // Update section
-              data.batch,       // Update batch
+              parseFloat(data.totalScore.toFixed(2)),
+              data.totalCredits,  // Ensure credits are whole if they don’t require decimals
+              data.department,
+              data.section,
+              data.batch,
               data.rollNo,
               data.registerNumber,
               data.semester,
             ]
-          );
+          );          
         } else {
           // If no record found, insert a new entry
           await pool.query(
