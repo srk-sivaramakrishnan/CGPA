@@ -95,13 +95,13 @@ function ManageCGPA() {
   const handleNext = async () => {
     setIsPreviewSubjects(true);  // Set flag to preview subjects
     setLoading(true);
-  
+
     const subjects = excelData[0].slice(3).map((subjectCode, index) => ({
       subjectCode,
       subjectName: excelData[1][index + 3],
       credits: excelData[2][index + 3],
     }));
-  
+
     setTimeout(async () => {
       try {
         await axios.post(`${baseURL}/faculty/upload-subjects`, { subjects }, {
@@ -117,7 +117,7 @@ function ManageCGPA() {
       }
     }, 3000);
   };
-  
+
   // To open the modal, use `openSubjectsModal` when needed
   const handleModalTrigger = () => {
     openSubjectsModal();  // Trigger the modal to open
@@ -207,7 +207,7 @@ function ManageCGPA() {
 
   const storeGpaResults = async () => {
     await new Promise(resolve => setTimeout(resolve, 3000));
-  
+
     const gpaData = gpaResults.map(result => ({
       rollNo: result.rollNo,
       registerNumber: result.registerNumber,
@@ -219,9 +219,9 @@ function ManageCGPA() {
       section,
       batch,
     }));
-  
+
     const chunkedData = chunkArray(gpaData, 10);
-  
+
     try {
       for (const chunk of chunkedData) {
         await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData: chunk }, {
@@ -237,7 +237,7 @@ function ManageCGPA() {
       alert('Failed to store GPA results. Please try again.');
     }
   };
-  
+
 
   return (
     <div className="calculating-cgpa-container">
@@ -301,6 +301,13 @@ function ManageCGPA() {
         )}
       </div>
 
+{/* Download Template Link */}
+<div className="download-template-link">
+  <a href="/Cgpa-Template.xlsx" download="Cgpa-Template.xlsx">Click here to download Template</a>
+</div>
+
+
+
       {/* Confirmation Modal */}
       <Modal
         isOpen={isConfirmationModalOpen}
@@ -322,79 +329,79 @@ function ManageCGPA() {
 
       {/* Subjects Modal */}
       <Modal
-  isOpen={isSubjectsModalOpen}
-  onRequestClose={closeSubjectsModal}
-  contentLabel="Subjects Preview"
-  className="modal"
-  overlayClassName="modal-overlay"
->
-  <div className="modal-content">
-    <h2>Subjects Preview</h2>
-    <button className="close-modal" onClick={closeSubjectsModal}>&times;</button>
-    <div className="modal-table-container">
-      {loading ? (
-        <div className="loading-indicator"></div> // Show the round loading indicator
-      ) : (
-        isPreviewSubjects ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Subject Code</th>
-                <th>Subject Name</th>
-                <th>Credits</th>
-              </tr>
-            </thead>
-            <tbody>
-              {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
-                <tr key={index}>
-                  <td>{subjectCode}</td>
-                  <td>{excelData[1][index + 3]}</td>
-                  <td>{excelData[2][index + 3]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div>
-            <h3>Grades</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Roll No</th>
-                  <th>Register No</th>
-                  <th>Student Name</th>
-                  {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
-                    <th key={index}>{subjectCode}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {excelData.slice(3).map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    <td>{row[0]}</td>
-                    <td>{row[1]}</td>
-                    <td>{row[2]}</td>
-                    {row.slice(3).map((grade, colIndex) => (
-                      <td key={colIndex}>{grade}</td>
+        isOpen={isSubjectsModalOpen}
+        onRequestClose={closeSubjectsModal}
+        contentLabel="Subjects Preview"
+        className="modal"
+        overlayClassName="modal-overlay"
+      >
+        <div className="modal-content">
+          <h2>Subjects Preview</h2>
+          <button className="close-modal" onClick={closeSubjectsModal}>&times;</button>
+          <div className="modal-table-container">
+            {loading ? (
+              <div className="loading-indicator"></div> // Show the round loading indicator
+            ) : (
+              isPreviewSubjects ? (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject Code</th>
+                      <th>Subject Name</th>
+                      <th>Credits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
+                      <tr key={index}>
+                        <td>{subjectCode}</td>
+                        <td>{excelData[1][index + 3]}</td>
+                        <td>{excelData[2][index + 3]}</td>
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  </tbody>
+                </table>
+              ) : (
+                <div>
+                  <h3>Grades</h3>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Roll No</th>
+                        <th>Register No</th>
+                        <th>Student Name</th>
+                        {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
+                          <th key={index}>{subjectCode}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {excelData.slice(3).map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                          <td>{row[0]}</td>
+                          <td>{row[1]}</td>
+                          <td>{row[2]}</td>
+                          {row.slice(3).map((grade, colIndex) => (
+                            <td key={colIndex}>{grade}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
           </div>
-        )
-      )}
-    </div>
-    <div className="modal-navigation">
-      {isPreviewSubjects && (
-        <button className="next-button" onClick={handleNext}>Next</button>
-      )}
-      {!isPreviewSubjects && (
-        <button className="previous-button" onClick={handlePrevious}>Previous</button>
-      )}
-    </div>
-  </div>
-</Modal>
+          <div className="modal-navigation">
+            {isPreviewSubjects && (
+              <button className="next-button" onClick={handleNext}>Next</button>
+            )}
+            {!isPreviewSubjects && (
+              <button className="previous-button" onClick={handlePrevious}>Previous</button>
+            )}
+          </div>
+        </div>
+      </Modal>
 
 
       {/* Grades Modal */}

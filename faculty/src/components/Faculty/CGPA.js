@@ -1,29 +1,31 @@
-// CGPA.js
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import baseURL from '../../auth/connection';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable'; // To handle tables in PDF format
 import '../../styles/Faculty/CGPA.css';
 
 function CGPA() {
     const navigate = useNavigate();
 
     // State variables for search
-    const [searchCategory, setSearchCategory] = useState('rollNo'); // Default search category
+    const [searchCategory, setSearchCategory] = useState('rollNo');
     const [searchValue, setSearchValue] = useState('');
-    const [results, setResults] = useState([]); // State for storing fetched results
-    const [error, setError] = useState(''); // State for handling errors
-    const [isModalOpen, setIsModalOpen] = useState(false); // Modal open state
-    const [modalData, setModalData] = useState({}); // Data for the modal
+    const [error, setError] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalData, setModalData] = useState([]);
 
     // State variables for classwise search
     const [department, setDepartment] = useState('');
     const [section, setSection] = useState('');
     const [batch, setBatch] = useState('');
+    const [downloadFormat, setDownloadFormat] = useState('xlsx'); // For selecting download format
+    const [fileName, setFileName] = useState('cgpa_results'); // State to handle file name input
 
     const handleManageCGPAClick = () => {
-        navigate('/dashboard/cgpa/manage'); // Navigate to Manage CGPA page
+        navigate('/dashboard/cgpa/manage');
     };
 
     const handleSearchSubmit = async (e) => {
@@ -32,7 +34,6 @@ function CGPA() {
             const token = localStorage.getItem('token');
             let params = { category: searchCategory, filterValue: searchValue };
 
-            // Add additional filters for classwise search
             if (searchCategory === 'classwise') {
                 params = { ...params, department, section, batch };
             }
@@ -43,22 +44,91 @@ function CGPA() {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setResults(response.data);
+            setModalData(response.data);  // Set results to modalData
             setError('');
+            setIsModalOpen(true);  // Open the modal
         } catch (error) {
             console.error('Error fetching CGPA results:', error);
             setError('Failed to fetch CGPA results.');
         }
     };
 
-
-    const handleRowClick = (data) => {
-        setModalData(data);
-        setIsModalOpen(true);
-    };
-
     const closeModal = () => {
         setIsModalOpen(false);
+    };
+
+    // Function to download the results as XLSX
+    const downloadXLSX = () => {
+        const headers = ['Roll No', 'Register No', 'Student Name', 'CGPA'];
+        const rows = modalData.map(result => [
+            result['Roll No'],
+            result['Register Number'],
+            result['Student Name'],
+            result.CGPA,
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'CGPA Results');
+
+        // Add additional info in a separate sheet
+        const additionalInfo = [
+            ['Department:', department],
+            ['Section:', section],
+            ['Batch:', batch],
+        ];
+
+        const infoSheet = XLSX.utils.aoa_to_sheet(additionalInfo);
+        XLSX.utils.book_append_sheet(wb, infoSheet, 'Additional Info');
+
+        // Download the file with the user-defined name
+        XLSX.writeFile(wb, `${fileName}.xlsx`);
+    };
+
+    // Function to download the results as PDF
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(12);
+
+        // Get the page width and center the heading
+        const pageWidth = doc.internal.pageSize.width;
+        const heading = 'CGPA Results';
+        const headingWidth = doc.getTextWidth(heading);
+        const headingX = (pageWidth - headingWidth) / 2; // Calculate X to center
+
+        // Add centered heading
+        doc.text(heading, headingX, 10);
+
+        // Add additional info
+        doc.text(`Department: ${department}`, 14, 20);
+        doc.text(`Section: ${section}`, 14, 30);
+        doc.text(`Batch: ${batch}`, 14, 40);
+
+        const tableColumn = ['Roll No', 'Register No', 'Student Name', 'CGPA'];
+        const tableRows = modalData.map(result => [
+            result['Roll No'],
+            result['Register Number'],
+            result['Student Name'],
+            result.CGPA,
+        ]);
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 50,
+        });
+
+        // Save the PDF with the user-defined name
+        doc.save(`${fileName}.pdf`);
+    };
+
+    // Function to handle download based on selected format
+    const handleDownload = () => {
+        if (downloadFormat === 'xlsx') {
+            downloadXLSX();
+        } else if (downloadFormat === 'pdf') {
+            downloadPDF();
+        }
     };
 
     return (
@@ -155,39 +225,6 @@ function CGPA() {
                 </button>
             </form>
 
-            {error && <p className="error-message">{error}</p>}
-
-            <div>
-                {results.length > 0 ? (
-                    <table className="results-table">
-                        <thead>
-                            <tr>
-                                <th>Roll No</th>
-                                <th>Register No</th>
-                                <th>Student Name</th>
-                                <th>CGPA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {results.map((result, index) => (
-                                <tr
-                                    key={index}
-                                    onClick={() => handleRowClick(result)}
-                                    className="clickable-row"
-                                >
-                                    <td>{result['Roll No']}</td>
-                                    <td>{result['Register Number']}</td>
-                                    <td>{result['Student Name']}</td>
-                                    <td>{result.CGPA}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p>No results found.</p>
-                )}
-            </div>
-
             {/* Modal for displaying fetched data */}
             {isModalOpen && (
                 <div className="cgpa-modal-overlay">
@@ -195,16 +232,66 @@ function CGPA() {
                         <button className="cgpa-close-modal" onClick={closeModal}>
                             &times;
                         </button>
-                        <h3>Student Details</h3>
-                        <p><strong>Roll No:</strong> {modalData['Roll No']}</p>
-                        <p><strong>Register No:</strong> {modalData['Register Number']}</p>
-                        <p><strong>Student Name:</strong> {modalData['Student Name']}</p>
-                        <p><strong>CGPA:</strong> {modalData.CGPA}</p>
+                        <h3>CGPA Results</h3>
+
+                        {/* Show download options */}
+                        <div className="download-options">
+                            <label htmlFor="file-name">Enter File Name:</label>
+                            <input
+                                type="text"
+                                id="file-name"
+                                value={fileName}
+                                onChange={(e) => setFileName(e.target.value)}
+                            />
+
+                            <label htmlFor="download-format">Select Format:</label>
+                            <select
+                                id="download-format"
+                                value={downloadFormat}
+                                onChange={(e) => setDownloadFormat(e.target.value)}
+                            >
+                                <option value="xlsx">XLSX</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+
+                            <button className="download-button" onClick={handleDownload}>
+                                Download Results
+                            </button>
+                        </div>
+
+                        {/* Display the error message if any */}
+                        {error && <p className="error-message">{error}</p>}
+
+                        {/* Display the results in a table inside the modal */}
+                        {modalData.length > 0 ? (
+                            <div>
+                                <table className="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Roll No</th>
+                                            <th>Register No</th>
+                                            <th>Student Name</th>
+                                            <th>CGPA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {modalData.map((data, index) => (
+                                            <tr key={index}>
+                                                <td>{data['Roll No']}</td>
+                                                <td>{data['Register Number']}</td>
+                                                <td>{data['Student Name']}</td>
+                                                <td>{data.CGPA}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p>No results found</p>
+                        )}
                     </div>
                 </div>
             )}
-
-
         </div>
     );
 }
