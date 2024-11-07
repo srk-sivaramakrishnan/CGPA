@@ -56,7 +56,68 @@ select {
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
   }
-  
+
+  /* Confirmation Modal Styling */
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+.confirmation-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 600px; /* Set a max width for the modal */
+  width: 100%; /* Full width */
+  max-height: 80vh; /* Set a max height for the modal */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Optional shadow */
+  position: relative;
+}
+
+.confirmation-modal h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.confirmation-modal p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.confirmation-modal-actions {
+  display: flex;
+  justify-content: space-between; /* Space between buttons */
+  margin-top: 20px;
+}
+
+.confirmation-modal-actions button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer; /* Change cursor on hover */
+  font-size: 16px;
+}
+
+.confirmation-modal-actions button:hover {
+  background-color: #0056b3; /* Darker on hover */
+}
+
+.confirmation-modal-actions button:disabled {
+  background-color: #cccccc; /* Disabled color */
+  cursor: not-allowed; /* Change cursor on hover */
+}
+
   .modal {
     background: white;
     border-radius: 8px;
@@ -68,8 +129,6 @@ select {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Optional shadow */
     position: relative;
   }
-  
-  
   
   .modal-content {
     padding: 20px;

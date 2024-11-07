@@ -11,19 +11,18 @@ Modal.setAppElement('#root');
 function ManageCGPA() {
   const [semester, setSemester] = useState('');
   const [department, setDepartment] = useState('');
-  const [facultyClass, setFacultyClass] = useState('');
   const [section, setSection] = useState('');
   const [batch, setBatch] = useState('');
+  const [fileName, setFileName] = useState('');
   const [isSubjectsModalOpen, setIsSubjectsModalOpen] = useState(false);
   const [isGradesModalOpen, setIsGradesModalOpen] = useState(false);
   const [isStoreGpaModalOpen, setIsStoreGpaModalOpen] = useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [excelData, setExcelData] = useState([]);
   const [gpaResults, setGpaResults] = useState([]);
   const [isPreviewSubjects, setIsPreviewSubjects] = useState(true);
-  const [loading, setLoading] = useState(false); // For general loading
+  const [loading, setLoading] = useState(false);
 
-
-  // Grade points mapping
   const gradePoints = {
     'O': 10,
     'A+': 9,
@@ -35,13 +34,15 @@ function ManageCGPA() {
   };
 
   const onDrop = (acceptedFiles) => {
-    if (!semester || !department || !facultyClass || !section || !batch) {
+    if (!semester || !department || !section || !batch) {
       alert("Please fill in all dropdowns before uploading the file.");
       return;
     }
 
     if (acceptedFiles.length > 0) {
-      parseExcelFile(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      setFileName(file.name);  // Set the file name here
+      parseExcelFile(file);    // Call the function to parse the file
     }
   };
 
@@ -54,17 +55,18 @@ function ManageCGPA() {
     maxFiles: 1,
   });
 
-  const openSubjectsModal = () => setIsSubjectsModalOpen(true);
   const closeSubjectsModal = () => setIsSubjectsModalOpen(false);
+  const openSubjectsModal = () => setIsSubjectsModalOpen(true);
   const openGradesModal = () => setIsGradesModalOpen(true);
   const closeGradesModal = () => setIsGradesModalOpen(false);
   const openStoreGpaModal = () => setIsStoreGpaModalOpen(true);
   const closeStoreGpaModal = () => setIsStoreGpaModalOpen(false);
+  const openConfirmationModal = () => setIsConfirmationModalOpen(true); // Open confirmation modal
+  const closeConfirmationModal = () => setIsConfirmationModalOpen(false); // Close confirmation modal
 
   const parseExcelFile = (file) => {
-    setLoading(true); // Start loading
+    setLoading(true);
 
-    // Simulate the delay (3 seconds) for parsing the file
     setTimeout(() => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -74,50 +76,55 @@ function ManageCGPA() {
         const sheet = workbook.Sheets[sheetName];
 
         const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-        const filteredData = data.filter(row => row.some(cell => cell !== ""));
 
-        setLoading(false); // End loading after parsing
+        const filteredData = data.filter((row, index) => index !== 3 && row.some(cell => cell !== ""));
+
+        setLoading(false);
 
         if (filteredData.length > 2) {
           setExcelData(filteredData);
-          openSubjectsModal(); // Open Subjects modal first
+          openConfirmationModal();
         } else {
           alert("No valid data found in the uploaded file.");
         }
       };
       reader.readAsBinaryString(file);
-    }, 3000); // 3-second delay
+    }, 3000);
   };
 
   const handleNext = async () => {
-    setIsPreviewSubjects(false);
-    setLoading(true); // Set loading state to true
-
+    setIsPreviewSubjects(true);  // Set flag to preview subjects
+    setLoading(true);
+  
     const subjects = excelData[0].slice(3).map((subjectCode, index) => ({
       subjectCode,
       subjectName: excelData[1][index + 3],
       credits: excelData[2][index + 3],
     }));
-
-    // Set a delay before performing the upload action
+  
     setTimeout(async () => {
       try {
         await axios.post(`${baseURL}/faculty/upload-subjects`, { subjects }, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
-        closeSubjectsModal();
-        openGradesModal(); // Open Grades modal after uploading subjects
+        closeSubjectsModal();  // Close the subjects modal
+        openGradesModal();  // Open next modal if needed
       } catch (error) {
         console.error('Error uploading subjects:', error);
         alert('Failed to upload subjects. Please try again.');
       } finally {
-        setLoading(false); // Reset loading state after operation
+        setLoading(false);
       }
-    }, 3000); // Delay for 3 seconds (3000 ms)
+    }, 3000);
+  };
+  
+  // To open the modal, use `openSubjectsModal` when needed
+  const handleModalTrigger = () => {
+    openSubjectsModal();  // Trigger the modal to open
   };
 
   const handlePrevious = () => {
-    setIsPreviewSubjects(true);
+    setIsPreviewSubjects(false);
   };
 
   const chunkArray = (array, size) => {
@@ -129,24 +136,22 @@ function ManageCGPA() {
   };
 
   const uploadGrades = async () => {
-    setLoading(true); // Start loading
+    setLoading(true);
 
-    // Simulate loading delay of 3 seconds
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     const grades = excelData.slice(3).map((row) => {
-        return {
-            rollNo: row[0],
-            registerNumber: row[1],
-            studentName: row[2],
-            subjectCodes: excelData[0].slice(3),
-            grades: row.slice(3),
-            semester,
-            department,
-            year: facultyClass,
-            section,
-            batch,
-        };
+      return {
+        rollNo: row[0],
+        registerNumber: row[1],
+        studentName: row[2],
+        subjectCodes: excelData[0].slice(3),
+        grades: row.slice(3),
+        semester,
+        department,
+        section,
+        batch,
+      };
     });
 
     const creditsRow = excelData[2];
@@ -155,58 +160,54 @@ function ManageCGPA() {
     const gradeChunks = chunkArray(grades, 10);
 
     try {
-        for (const chunk of gradeChunks) {
-            await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk }, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-        }
+      for (const chunk of gradeChunks) {
+        await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk }, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+      }
 
-        const calculatedGpaResults = gradeChunks.flatMap((chunk) =>
-            chunk.map((grade) => {
-                let totalScore = 0;
-                let totalCredits = 0;
+      const calculatedGpaResults = gradeChunks.flatMap((chunk) =>
+        chunk.map((grade) => {
+          let totalScore = 0;
+          let totalCredits = 0;
 
-                grade.subjectCodes.forEach((subjectCode, index) => {
-                    const subjectCredit = parseFloat(credits[index]);
-                    const gradePoint = gradePoints[grade.grades[index]] || 0;
+          grade.subjectCodes.forEach((subjectCode, index) => {
+            const subjectCredit = parseFloat(credits[index]);
+            const gradePoint = gradePoints[grade.grades[index]] || 0;
 
-                    // Skip if grade is "U" (ungraded)
-                    if (grade.grades[index] !== 'U') {
-                        totalScore += gradePoint * subjectCredit;
-                        totalCredits += subjectCredit;
-                    }
-                });
+            if (grade.grades[index] !== 'U') {
+              totalScore += gradePoint * subjectCredit;
+              totalCredits += subjectCredit;
+            }
+          });
 
-                const gpa = totalCredits > 0 ? totalScore / totalCredits : 0;
+          const gpa = totalCredits > 0 ? totalScore / totalCredits : 0;
 
-                return {
-                    rollNo: grade.rollNo,
-                    registerNumber: grade.registerNumber,
-                    studentName: grade.studentName,
-                    totalScore,
-                    gpa: gpa.toFixed(2),
-                    totalCredits,
-                };
-            })
-        );
+          return {
+            rollNo: grade.rollNo,
+            registerNumber: grade.registerNumber,
+            studentName: grade.studentName,
+            totalScore,
+            gpa: gpa.toFixed(2),
+            totalCredits,
+          };
+        })
+      );
 
-        setGpaResults(calculatedGpaResults);
-        closeGradesModal();
-        openStoreGpaModal(); // Open Store GPA modal after uploading grades
+      setGpaResults(calculatedGpaResults);
+      closeGradesModal();
+      openStoreGpaModal();
     } catch (error) {
-        console.error('Error uploading grades:', error);
-        alert('Failed to upload grades. Please try again.');
+      console.error('Error uploading grades:', error);
+      alert('Failed to upload grades. Please try again.');
     } finally {
-        setLoading(false); // End loading after uploading grades
+      setLoading(false);
     }
-};
+  };
 
-const storeGpaResults = async () => {
-    // No loading state, remove setLoading logic
-
-    // Simulate loading delay of 3 seconds
+  const storeGpaResults = async () => {
     await new Promise(resolve => setTimeout(resolve, 3000));
-
+  
     const gpaData = gpaResults.map(result => ({
       rollNo: result.rollNo,
       registerNumber: result.registerNumber,
@@ -214,13 +215,13 @@ const storeGpaResults = async () => {
       semester,
       totalScore: result.totalScore,
       totalCredits: result.totalCredits,
-      department,  // Include department value
-      section,     // Include section value
-      batch,       // Include batch value
+      department,
+      section,
+      batch,
     }));
-
-    const chunkedData = chunkArray(gpaData, 10); // Split data into chunks of 10
-
+  
+    const chunkedData = chunkArray(gpaData, 10);
+  
     try {
       for (const chunk of chunkedData) {
         await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData: chunk }, {
@@ -230,12 +231,13 @@ const storeGpaResults = async () => {
       }
       alert('GPA results stored successfully!');
       closeStoreGpaModal();
+      closeConfirmationModal(); // Close the confirmation modal after showing the alert
     } catch (error) {
       console.error('Error storing GPA results:', error);
       alert('Failed to store GPA results. Please try again.');
     }
-};
-
+  };
+  
 
   return (
     <div className="calculating-cgpa-container">
@@ -268,16 +270,6 @@ const storeGpaResults = async () => {
         </select>
       </div>
 
-      <div className="form-group">
-        <label htmlFor="facultyClass">Class:</label>
-        <select id="facultyClass" value={facultyClass} onChange={(e) => setFacultyClass(e.target.value)} required>
-          <option value="">Select Class</option>
-          <option value="1st Year">1st Year</option>
-          <option value="2nd Year">2nd Year</option>
-          <option value="3rd Year">3rd Year</option>
-          <option value="4th Year">4th Year</option>
-        </select>
-      </div>
 
       <div className="form-group">
         <label htmlFor="section">Section:</label>
@@ -309,81 +301,101 @@ const storeGpaResults = async () => {
         )}
       </div>
 
-      {/* Subjects Modal */}
+      {/* Confirmation Modal */}
       <Modal
-        isOpen={isSubjectsModalOpen}
-        onRequestClose={closeSubjectsModal}
-        contentLabel="Subjects Preview"
-        className="modal"
-        overlayClassName="modal-overlay"
+        isOpen={isConfirmationModalOpen}
+        onRequestClose={() => setIsConfirmationModalOpen(false)}
+        className="confirmation-modal"
+        overlayClassName="confirmation-modal-overlay"
       >
-        <div className="modal-content">
-          <h2>Subjects Preview</h2>
-          <button className="close-modal" onClick={closeSubjectsModal}>&times;</button>
-          <div className="modal-table-container">
-            {loading ? (
-              <div className="loading-indicator"></div> // Show the round loading indicator
-            ) : (
-              isPreviewSubjects ? (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Subject Code</th>
-                      <th>Subject Name</th>
-                      <th>Credits</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
-                      <tr key={index}>
-                        <td>{subjectCode}</td>
-                        <td>{excelData[1][index + 3]}</td>
-                        <td>{excelData[2][index + 3]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div>
-                  <h3>Grades</h3>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Roll No</th>
-                        <th>Register No</th>
-                        <th>Student Name</th>
-                        {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
-                          <th key={index}>{subjectCode}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {excelData.slice(3).map((row, rowIndex) => (
-                        <tr key={rowIndex}>
-                          <td>{row[0]}</td>
-                          <td>{row[1]}</td>
-                          <td>{row[2]}</td>
-                          {row.slice(3).map((grade, colIndex) => (
-                            <td key={colIndex}>{grade}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            )}
-          </div>
-          <div className="modal-navigation">
-            {isPreviewSubjects && (
-              <button className="next-button" onClick={handleNext}>Next</button>
-            )}
-            {!isPreviewSubjects && (
-              <button className="previous-button" onClick={handlePrevious}>Previous</button>
-            )}
-          </div>
+        <h2>Confirm Your Selection</h2>
+        <p>Semester: {semester}</p>
+        <p>Department: {department}</p>
+        <p>Section: {section}</p>
+        <p>Batch: {batch}</p>
+        <p>Uploaded File: {fileName}</p> {/* Display the uploaded file name */}
+        <div className="confirmation-modal-actions">
+          <button onClick={() => setIsConfirmationModalOpen(false)}>Cancel</button>
+          <button onClick={handleModalTrigger}>Proceed</button>
         </div>
       </Modal>
+
+      {/* Subjects Modal */}
+      <Modal
+  isOpen={isSubjectsModalOpen}
+  onRequestClose={closeSubjectsModal}
+  contentLabel="Subjects Preview"
+  className="modal"
+  overlayClassName="modal-overlay"
+>
+  <div className="modal-content">
+    <h2>Subjects Preview</h2>
+    <button className="close-modal" onClick={closeSubjectsModal}>&times;</button>
+    <div className="modal-table-container">
+      {loading ? (
+        <div className="loading-indicator"></div> // Show the round loading indicator
+      ) : (
+        isPreviewSubjects ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Credits</th>
+              </tr>
+            </thead>
+            <tbody>
+              {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
+                <tr key={index}>
+                  <td>{subjectCode}</td>
+                  <td>{excelData[1][index + 3]}</td>
+                  <td>{excelData[2][index + 3]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div>
+            <h3>Grades</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Register No</th>
+                  <th>Student Name</th>
+                  {excelData[0] && excelData[0].slice(3).map((subjectCode, index) => (
+                    <th key={index}>{subjectCode}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {excelData.slice(3).map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    <td>{row[0]}</td>
+                    <td>{row[1]}</td>
+                    <td>{row[2]}</td>
+                    {row.slice(3).map((grade, colIndex) => (
+                      <td key={colIndex}>{grade}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+    </div>
+    <div className="modal-navigation">
+      {isPreviewSubjects && (
+        <button className="next-button" onClick={handleNext}>Next</button>
+      )}
+      {!isPreviewSubjects && (
+        <button className="previous-button" onClick={handlePrevious}>Previous</button>
+      )}
+    </div>
+  </div>
+</Modal>
+
 
       {/* Grades Modal */}
       <Modal

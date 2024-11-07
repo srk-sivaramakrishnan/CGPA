@@ -72,17 +72,17 @@ exports.uploadSubjects = async (req, res) => {
 // Function to upload grades
 exports.uploadGrades = async (req, res) => {
     const { grades } = req.body;
-  
+
     if (!grades || grades.length === 0) {
-      return res.status(400).json({ message: 'No grades provided' });
+        return res.status(400).json({ message: 'No grades provided' });
     }
-  
+
     try {
-      await facultyModel.upsertGrades(grades); // Call the model function
-      res.status(200).json({ message: 'Grades upserted successfully' });
+        await facultyModel.upsertGrades(grades); // Call the model function
+        res.status(200).json({ message: 'Grades upserted successfully' });
     } catch (error) {
-      console.error('Error uploading grades:', error);
-      res.status(500).json({ message: 'Server error' });
+        console.error('Error uploading grades:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 };
 

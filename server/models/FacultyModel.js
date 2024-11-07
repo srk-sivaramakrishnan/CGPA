@@ -43,44 +43,42 @@ const upsertSubjects = async (subjects) => {
 
 // Function to upsert grades into the database
 const upsertGrades = async (grades) => {
-    const insertQueries = grades.map((gradeData) => {
+  const insertQueries = grades.map((gradeData) => {
       return gradeData.subjectCodes.map((subjectCode, index) => {
-        return [
-          gradeData.rollNo,
-          gradeData.registerNumber,
-          gradeData.studentName,
-          subjectCode,
-          gradeData.grades[index],
-          gradeData.semester,
-          gradeData.department,
-          gradeData.year,
-          gradeData.section,
-          gradeData.batch,
-        ];
+          return [
+              gradeData.rollNo,
+              gradeData.registerNumber,
+              gradeData.studentName,
+              subjectCode,
+              gradeData.grades[index],
+              gradeData.semester,
+              gradeData.department,
+              gradeData.section,
+              gradeData.batch,
+          ];
       });
-    }).flat();
-  
-    const insertStatement = `
+  }).flat();
+
+  const insertStatement = `
       INSERT INTO Grades (
-        \`Roll No\`, \`Register Number\`, \`Student Name\`, \`Subject Code\`, \`Grade\`,
-        \`Semester\`, \`Department\`, \`Year\`, \`Section\`, \`Batch\`
+          \`Roll No\`, \`Register Number\`, \`Student Name\`, \`Subject Code\`, \`Grade\`,
+          \`Semester\`, \`Department\`, \`Section\`, \`Batch\`
       ) VALUES ? 
       ON DUPLICATE KEY UPDATE 
-        \`Grade\` = VALUES(\`Grade\`),
-        \`Semester\` = VALUES(\`Semester\`),
-        \`Department\` = VALUES(\`Department\`),
-        \`Year\` = VALUES(\`Year\`),
-        \`Section\` = VALUES(\`Section\`),
-        \`Batch\` = VALUES(\`Batch\`);
-    `;
-  
-    try {
+          \`Grade\` = VALUES(\`Grade\`),
+          \`Semester\` = VALUES(\`Semester\`),
+          \`Department\` = VALUES(\`Department\`),
+          \`Section\` = VALUES(\`Section\`),
+          \`Batch\` = VALUES(\`Batch\`);
+  `;
+
+  try {
       await pool.query(insertStatement, [insertQueries]);
-    } catch (error) {
+  } catch (error) {
       console.error('Error upserting grades into DB:', error);
       throw error; // Propagate the error for the controller to handle
-    }
-  };
+  }
+};
 
 // Upsert function to store or update GPA data in `cgpa_calculation`
 const upsertCgpaCalculation = async (gpaData) => {
