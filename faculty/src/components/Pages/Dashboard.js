@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom'; // Import Link and Outlet for navigation
-import { Home, BarChart, User, ChevronLeft, ChevronRight } from 'lucide-react'; // Import Lucide icons
-import './../../styles/Pages/Dashboard.css'; // Import CSS styles
+import { Link, Outlet } from 'react-router-dom';
+import { Home, BarChart, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import './../../styles/Pages/Dashboard.css';
 
 const Dashboard = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State to manage sidebar visibility
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const toggleSidebar = () => {
-        setIsSidebarOpen((prev) => !prev); // Toggle sidebar visibility
+        setIsSidebarOpen((prev) => !prev);
     };
 
     return (
@@ -16,33 +16,28 @@ const Dashboard = () => {
                 <button className="toggle-button" onClick={toggleSidebar}>
                     {isSidebarOpen ? <ChevronLeft className="icon" /> : <ChevronRight className="icon" />}
                 </button>
-                {isSidebarOpen && (
-                    <>
-                        <h2>Faculty Dashboard</h2>
-                        <nav>
-                            <ul>
-                                <li>
-                                    <Link to="/dashboard/home" className="sidebar-link">
-                                        <Home className="icon" /> Home
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/dashboard/cgpa" className="sidebar-link">
-                                        <BarChart className="icon" /> CGPA
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/dashboard/profile" className="sidebar-link">
-                                        <User className="icon" /> Profile
-                                    </Link>
-                                </li>
-                            </ul>
-                        </nav>
-                    </>
-                )}
+                <nav>
+                    <ul>
+                        <li>
+                            <Link to="/dashboard/home" className="sidebar-link">
+                                <Home className="icon" /> {isSidebarOpen && <span>Home</span>}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/dashboard/cgpa" className="sidebar-link">
+                                <BarChart className="icon" /> {isSidebarOpen && <span>CGPA</span>}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/dashboard/profile" className="sidebar-link">
+                                <User className="icon" /> {isSidebarOpen && <span>Profile</span>}
+                            </Link>
+                        </li>
+                    </ul>
+                </nav>
             </aside>
-            <main className="dashboard-content"> {/* Add a main content area */}
-                <Outlet /> {/* This is where child routes will render */}
+            <main className="dashboard-content">
+                <Outlet />
             </main>
         </div>
     );

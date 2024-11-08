@@ -7,6 +7,7 @@ import CGPA from './components/Faculty/CGPA'; // Import CGPA component
 import Profile from './components/Faculty/Profile'; // Import Profile component
 import ManageCGPA from './components/Faculty/ManageCGPA';
 import CalculatingCGPA from './components/Faculty/CalculatingCGPA';
+import FetchAllCGPA from './components/Faculty/FetchAllCGPA';
 
 const App = () => {
     return (
@@ -19,6 +20,7 @@ const App = () => {
                         <Route path="cgpa" element={<CGPA />} /> {/* CGPA route */}
                         <Route path="profile" element={<Profile />} /> {/* Profile route */}
                         <Route path="cgpa/manage" element={<ManageCGPA />} />
+                        <Route path="cgpa/fetch" element={<FetchAllCGPA />} />
                         <Route path="cgpa/calculating" element={<CalculatingCGPA />} /> {/* Manage CGPA route */}
                     </Route>
                 </Routes>

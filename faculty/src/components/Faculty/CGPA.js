@@ -234,30 +234,32 @@ function CGPA() {
                         </button>
                         <h3>CGPA Results</h3>
 
-                        {/* Show download options */}
-                        <div className="download-options">
-                            <label htmlFor="file-name">Enter File Name:</label>
-                            <input
-                                type="text"
-                                id="file-name"
-                                value={fileName}
-                                onChange={(e) => setFileName(e.target.value)}
-                            />
+                        {/* Show download options only if the search is classwise */}
+                        {searchCategory === 'classwise' && (
+                            <div className="download-options">
+                                <label htmlFor="file-name">Enter File Name:</label>
+                                <input
+                                    type="text"
+                                    id="file-name"
+                                    value={fileName}
+                                    onChange={(e) => setFileName(e.target.value)}
+                                />
 
-                            <label htmlFor="download-format">Select Format:</label>
-                            <select
-                                id="download-format"
-                                value={downloadFormat}
-                                onChange={(e) => setDownloadFormat(e.target.value)}
-                            >
-                                <option value="xlsx">XLSX</option>
-                                <option value="pdf">PDF</option>
-                            </select>
+                                <label htmlFor="download-format">Select Format:</label>
+                                <select
+                                    id="download-format"
+                                    value={downloadFormat}
+                                    onChange={(e) => setDownloadFormat(e.target.value)}
+                                >
+                                    <option value="xlsx">Excel Sheet</option>
+                                    <option value="pdf">PDF</option>
+                                </select>
 
-                            <button className="download-button" onClick={handleDownload}>
-                                Download Results
-                            </button>
-                        </div>
+                                <button className="download-button" onClick={handleDownload}>
+                                    Download Results
+                                </button>
+                            </div>
+                        )}
 
                         {/* Display the error message if any */}
                         {error && <p className="error-message">{error}</p>}
