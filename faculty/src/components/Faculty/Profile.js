@@ -8,19 +8,17 @@ const Profile = () => {
 
     useEffect(() => {
         const fetchProfile = async () => {
-            const token = localStorage.getItem('token');
             try {
-                const response = await axios.get(`${baseURL}/faculty/profile`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                const response = await axios.get(`${baseURL}/faculty/profile`);
                 setProfile(response.data);
             } catch (err) {
                 setError('Failed to fetch profile');
             }
         };
-
+    
         fetchProfile();
     }, []);
+    
 
     return (
         <div>

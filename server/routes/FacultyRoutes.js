@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/login', FacultyController.login);
 
 // Route to get faculty profile
-router.get('/profile', authenticateToken, FacultyController.getFacultyProfile);
+router.get('/profile', FacultyController.getFacultyProfile);
 
 // Route to upload subjects
 router.post('/upload-subjects', authenticateToken, FacultyController.uploadSubjects);
