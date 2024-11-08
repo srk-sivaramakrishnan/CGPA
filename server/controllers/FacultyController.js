@@ -34,23 +34,23 @@ exports.login = async (req, res) => {
     }
 };
 
-// Fetch faculty profile
+// In FacultyController.js
 exports.getFacultyProfile = async (req, res) => {
-    const facultyId = req.user.facultyId; // Get facultyId from the decoded token
+    const facultyId = req.query.facultyId; // Get facultyId from the query parameter
+
+    if (!facultyId) {
+        return res.status(400).json({ error: 'Faculty ID is required' });
+    }
 
     try {
-        const faculty = await facultyModel.findFacultyProfile(facultyId);
-
-        if (!faculty) {
-            return res.status(404).json({ message: 'Faculty not found' });
+        // Fetch profile data based on facultyId
+        const profile = await FacultyModel.findById(facultyId); // Update according to your database query
+        if (!profile) {
+            return res.status(404).json({ error: 'Profile not found' });
         }
-
-        // Exclude Password
-        const { Password, ...profile } = faculty;
-        res.status(200).json(profile);
+        res.json(profile);
     } catch (error) {
-        console.error('Error fetching faculty profile:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ error: 'Server error' });
     }
 };
 

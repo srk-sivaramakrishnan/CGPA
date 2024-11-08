@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import baseURL from '../../auth/connection'; // Import the base URL
+import baseURL from '../../auth/connection'; 
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
