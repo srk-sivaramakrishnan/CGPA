@@ -31,27 +31,28 @@ function CGPA() {
     const handleSearchSubmit = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
             let params = { category: searchCategory, filterValue: searchValue };
-
+    
+            // If the search category is 'classwise', include department, section, and batch
             if (searchCategory === 'classwise') {
                 params = { ...params, department, section, batch };
             }
-
+    
+            // Perform GET request without Authorization header
             const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
                 params: params,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                // No Authorization header here
             });
+    
             setModalData(response.data);  // Set results to modalData
-            setError('');
-            setIsModalOpen(true);  // Open the modal
+            setError('');  // Clear error message
+            setIsModalOpen(true);  // Open the modal with results
         } catch (error) {
             console.error('Error fetching CGPA results:', error);
             setError('Failed to fetch CGPA results.');
         }
     };
+    
 
     const closeModal = () => {
         setIsModalOpen(false);

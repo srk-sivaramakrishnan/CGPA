@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import baseURL from '../../auth/connection'; 
+import baseURL from '../../auth/connection';
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
@@ -8,17 +8,25 @@ const Profile = () => {
 
     useEffect(() => {
         const fetchProfile = async () => {
+            const facultyId = localStorage.getItem('facultyId'); // Retrieve facultyId from localStorage
+
+            if (!facultyId) {
+                setError('Faculty ID not found. Please log in again.');
+                return;
+            }
+
             try {
-                const response = await axios.get(`${baseURL}/faculty/profile`);
+                const response = await axios.get(`${baseURL}/faculty/profile`, {
+                    params: { facultyId },
+                });
                 setProfile(response.data);
             } catch (err) {
                 setError('Failed to fetch profile');
             }
         };
-    
+
         fetchProfile();
     }, []);
-    
 
     return (
         <div>

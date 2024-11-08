@@ -11,15 +11,15 @@ router.post('/login', FacultyController.login);
 router.get('/profile', FacultyController.getFacultyProfile);
 
 // Route to upload subjects
-router.post('/upload-subjects', authenticateToken, FacultyController.uploadSubjects);
+router.post('/upload-subjects', FacultyController.uploadSubjects);
 
 // Route to upload grades
-router.post('/upload-grades', authenticateToken, FacultyController.uploadGrades);
+router.post('/upload-grades', FacultyController.uploadGrades);
 
 // Endpoint to store GPA results in `cgpa_calculation` table
-router.post('/store-cgpa-calculation',  authenticateToken, FacultyController.storeCgpaCalculation);
+router.post('/store-cgpa-calculation', FacultyController.storeCgpaCalculation);
 
 // Route for getting CGPA calculation
-router.get('/cgpa-calculation', authenticateToken, FacultyController.getCumulativeCGPA);
+router.get('/cgpa-calculation', FacultyController.getCumulativeCGPA);
 
 module.exports = router;

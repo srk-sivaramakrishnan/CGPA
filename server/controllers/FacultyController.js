@@ -20,47 +20,47 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid password' });
         }
 
-        // Create a JWT token
-        const token = jwt.sign(
-            { id: faculty.id, facultyId: faculty[`Faculty Id`] }, // Payload
-            process.env.SECRET_KEY, // Secret key from .env
-            { expiresIn: '2h' } // Token expiration time
-        );
-
-        res.status(200).json({ message: 'Login successful', token }); // Return the token
+        // Return success message with facultyId
+        res.status(200).json({ message: 'Login successful', facultyId });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
 
-// In FacultyController.js
+// Fetch faculty profile without token authentication
 exports.getFacultyProfile = async (req, res) => {
-    const facultyId = req.query.facultyId; // Get facultyId from the query parameter
+    const facultyId = req.query.facultyId || req.body.facultyId; // Get facultyId from query or body
 
     if (!facultyId) {
-        return res.status(400).json({ error: 'Faculty ID is required' });
+        return res.status(400).json({ message: 'Faculty ID is required' });
     }
 
     try {
-        // Fetch profile data based on facultyId
-        const profile = await FacultyModel.findById(facultyId); // Update according to your database query
-        if (!profile) {
-            return res.status(404).json({ error: 'Profile not found' });
+        const faculty = await facultyModel.findFacultyProfile(facultyId);
+
+        if (!faculty) {
+            return res.status(404).json({ message: 'Faculty not found' });
         }
-        res.json(profile);
+
+        // Exclude Password field
+        const { Password, ...profile } = faculty;
+        res.status(200).json(profile);
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error fetching faculty profile:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 };
 
-// Controller to handle uploading subjects
+// Controller to handle uploading subjects without token authentication
 exports.uploadSubjects = async (req, res) => {
     try {
         const { subjects } = req.body;
+        
         if (!Array.isArray(subjects) || subjects.length === 0) {
             return res.status(400).json({ message: 'No subjects to upload.' });
         }
+        
         await facultyModel.upsertSubjects(subjects);
         res.status(200).json({ message: 'Subjects uploaded successfully.' });
     } catch (error) {

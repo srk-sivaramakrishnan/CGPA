@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import baseURL from '../../auth/connection'; // Import the base URL
+import baseURL from '../../auth/connection';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const [facultyId, setFacultyId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const navigate = useNavigate(); // For navigation after login
+    const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
-        setSuccess('');
 
         try {
             const response = await axios.post(`${baseURL}/faculty/login`, {
@@ -21,16 +19,16 @@ const Login = () => {
                 password,
             });
 
-            // Save token to local storage
-            localStorage.setItem('token', response.data.token);
+            // Store facultyId in localStorage
+            localStorage.setItem('facultyId', response.data.facultyId);
 
             // Redirect to the dashboard
             navigate('/dashboard');
         } catch (err) {
             if (err.response) {
-                setError(err.response.data.message); // Show error message from the server
+                setError(err.response.data.message);
             } else {
-                setError('Server error. Please try again.'); // General error message
+                setError('Server error. Please try again.');
             }
         }
     };
@@ -60,7 +58,6 @@ const Login = () => {
                     />
                 </div>
                 {error && <p className="error">{error}</p>}
-                {success && <p className="success">{success}</p>}
                 <button type="submit">Login</button>
             </form>
         </div>
