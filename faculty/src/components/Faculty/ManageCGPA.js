@@ -24,7 +24,6 @@ function ManageCGPA() {
   const [loading, setLoading] = useState(false);
   const [setCgpaResults] = useState([]);
 
-
   const gradePoints = {
     'O': 10,
     'A+': 9,
@@ -119,23 +118,14 @@ function ManageCGPA() {
             setLoading(false);
         }
     }, 3000);
-};
+  };
 
-  // To open the modal, use `openSubjectsModal` when needed
   const handleModalTrigger = () => {
     openSubjectsModal();  // Trigger the modal to open
   };
 
   const handlePrevious = () => {
     setIsPreviewSubjects(false);
-  };
-
-  const chunkArray = (array, size) => {
-    const chunks = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
   };
 
   const uploadGrades = async () => {
@@ -160,42 +150,36 @@ function ManageCGPA() {
     const creditsRow = excelData[2];
     const credits = creditsRow.slice(3);
 
-    // Split grades data into chunks of 10 for batch uploading
-    const gradeChunks = chunkArray(grades, 10);
-
     try {
-        for (const chunk of gradeChunks) {
-            await axios.post(`${baseURL}/faculty/upload-grades`, { grades: chunk });
-        }
+        // Send all grades at once without chunking
+        await axios.post(`${baseURL}/faculty/upload-grades`, { grades });
 
-        // Calculate GPA for each student in the gradeChunks
-        const calculatedGpaResults = gradeChunks.flatMap((chunk) =>
-            chunk.map((grade) => {
-                let totalScore = 0;
-                let totalCredits = 0;
+        // Calculate GPA for each student
+        const calculatedGpaResults = grades.map((grade) => {
+            let totalScore = 0;
+            let totalCredits = 0;
 
-                grade.subjectCodes.forEach((subjectCode, index) => {
-                    const subjectCredit = parseFloat(credits[index]);
-                    const gradePoint = gradePoints[grade.grades[index]] || 0;
+            grade.subjectCodes.forEach((subjectCode, index) => {
+                const subjectCredit = parseFloat(credits[index]);
+                const gradePoint = gradePoints[grade.grades[index]] || 0;
 
-                    if (grade.grades[index] !== 'U') {
-                        totalScore += gradePoint * subjectCredit;
-                        totalCredits += subjectCredit;
-                    }
-                });
+                if (grade.grades[index] !== 'U') {
+                    totalScore += gradePoint * subjectCredit;
+                    totalCredits += subjectCredit;
+                }
+            });
 
-                const gpa = totalCredits > 0 ? totalScore / totalCredits : 0;
+            const gpa = totalCredits > 0 ? totalScore / totalCredits : 0;
 
-                return {
-                    rollNo: grade.rollNo,
-                    registerNumber: grade.registerNumber,
-                    studentName: grade.studentName,
-                    totalScore,
-                    gpa: gpa.toFixed(2),
-                    totalCredits,
-                };
-            })
-        );
+            return {
+                rollNo: grade.rollNo,
+                registerNumber: grade.registerNumber,
+                studentName: grade.studentName,
+                totalScore,
+                gpa: gpa.toFixed(2),
+                totalCredits,
+            };
+        });
 
         // Set calculated GPA results and open the next modal
         setGpaResults(calculatedGpaResults);
@@ -207,74 +191,67 @@ function ManageCGPA() {
     } finally {
         setLoading(false);
     }
-};
+  };
 
-const storeGpaResults = async () => {
-  // Simulate a delay for user experience
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  const storeGpaResults = async () => {
+    // Simulate a delay for user experience
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-  // Prepare the GPA data for storing
-  const gpaData = gpaResults.map(result => ({
-    rollNo: result.rollNo,
-    registerNumber: result.registerNumber,
-    studentName: result.studentName,
-    semester,
-    totalScore: result.totalScore,
-    totalCredits: result.totalCredits,
-    department,
-    section,
-    batch,
-  }));
+    // Prepare the GPA data for storing
+    const gpaData = gpaResults.map(result => ({
+      rollNo: result.rollNo,
+      registerNumber: result.registerNumber,
+      studentName: result.studentName,
+      semester,
+      totalScore: result.totalScore,
+      totalCredits: result.totalCredits,
+      department,
+      section,
+      batch,
+    }));
 
-  // Split the GPA data into chunks of 10 for batch uploading
-  const chunkedData = chunkArray(gpaData, 10);
-
-  try {
-    // Upload each chunk of GPA data without the Authorization header
-    for (const chunk of chunkedData) {
-      await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData: chunk });
+    try {
+      // Send all GPA data at once without chunking
+      await axios.post(`${baseURL}/faculty/store-cgpa-calculation`, { gpaData });
       console.log('Batch stored successfully!');
+
+      // Show success alert and close modals
+      alert('GPA results stored successfully!');
+      closeStoreGpaModal();
+      closeConfirmationModal(); // Close the confirmation modal after the alert
+
+      // After successfully storing the GPA results, fetch the CGPA results
+      fetchCgpaResults(); // Fetch CGPA results after storing GPA data
+    } catch (error) {
+      console.error('Error storing GPA results:', error);
+      alert('Failed to store GPA results. Please try again.');
     }
+  };
 
-    // Show success alert and close modals
-    alert('GPA results stored successfully!');
-    closeStoreGpaModal();
-    closeConfirmationModal(); // Close the confirmation modal after the alert
+  const fetchCgpaResults = async () => {
+    try {
+      // Make the API call to fetch CGPA results
+      const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
+        params: { 
+          department,
+          section,
+          batch,
+          semester 
+        }
+      });
 
-    // After successfully storing the GPA results, fetch the CGPA results
-    fetchCgpaResults(); // Fetch CGPA results after storing GPA data
-  } catch (error) {
-    console.error('Error storing GPA results:', error);
-    alert('Failed to store GPA results. Please try again.');
-  }
-};
-
-const fetchCgpaResults = async () => {
-  try {
-    // Make the API call to fetch CGPA results
-    const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
-      params: { 
-        department,
-        section,
-        batch,
-        semester 
+      // Check if the response contains data
+      if (response.data) {
+        // Store the fetched CGPA results in state
+        console.log('Fetched CGPA results:', response.data);
+        setCgpaResults(response.data);  // Update state to store CGPA results
+      } else {
+        alert('No CGPA data found for the selected filters.');
       }
-    });
-
-    // Check if the response contains data
-    if (response.data) {
-      // Store the fetched CGPA results in state
-      console.log('Fetched CGPA results:', response.data);
-      setCgpaResults(response.data);  // Update state to store CGPA results
-    } else {
-      console.warn('No CGPA results found for the given parameters.');
+    } catch (error) {
+      console.error('Error fetching CGPA results:', error);
     }
-  } catch (error) {
-    // Detailed error handling with alert and console logs
-    console.error('Error fetching CGPA results:', error);
-    alert('Failed to fetch CGPA results. Please try again.');
-  }
-};
+  };
 
   return (
     <div className="calculating-cgpa-container">
