@@ -1,8 +1,7 @@
-// AdminLogin.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import baseURL from '../../auth/connection'; // Import the base URL
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import baseURL from '../../auth/connection'; // Assuming this is your base URL
+import { useNavigate } from 'react-router-dom'; 
 
 const Login = () => {
     const [adminId, setAdminId] = useState('');
@@ -10,37 +9,36 @@ const Login = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate(); 
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Prevent form from refreshing the page
-
+        e.preventDefault(); // Prevent form from refreshing
+    
+        if (!adminId || !password) {
+            setError('Admin ID and Password are required');
+            return;
+        }
+    
         try {
             const response = await axios.post(`${baseURL}/admin/login`, {
                 admin_id: adminId,
                 password: password,
             });
-
-            // Handle successful login
+    
             setSuccess(response.data.message);
             setError('');
-            console.log(response.data.admin); // Admin data can be used here
-
-            // Redirect to the dashboard after a successful login
-            navigate('/dashboard'); // Navigate to the dashboard
-
+            navigate('/dashboard'); // Redirect on success
+    
         } catch (err) {
             if (err.response) {
-                // Handle error response from the server
                 setError(err.response.data.message);
-                setSuccess('');
             } else {
-                // Handle other errors (network issues, etc.)
                 setError('An error occurred. Please try again.');
-                setSuccess('');
             }
+            setSuccess('');
         }
     };
+    
 
     return (
         <div className="admin-login">

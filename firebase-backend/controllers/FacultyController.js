@@ -1,5 +1,4 @@
 const bcrypt = require('bcrypt');
-const fs = require('fs');
 const facultyModel = require('../models/FacultyModel');
 
 // Faculty login function
@@ -7,12 +6,14 @@ exports.login = async (req, res) => {
     const { facultyId, password } = req.body;
 
     try {
+        // Fetch faculty from Firestore by facultyId
         const faculty = await facultyModel.findFacultyById(facultyId);
 
         if (!faculty) {
             return res.status(404).json({ message: 'Faculty not found' });
         }
 
+        // Compare the provided password with the hashed password stored in Firestore
         const match = await bcrypt.compare(password, faculty.Password);
 
         if (!match) {
@@ -27,6 +28,7 @@ exports.login = async (req, res) => {
     }
 };
 
+
 // Fetch faculty profile without token authentication
 exports.getFacultyProfile = async (req, res) => {
     const facultyId = req.query.facultyId || req.body.facultyId; // Get facultyId from query or body
@@ -36,13 +38,14 @@ exports.getFacultyProfile = async (req, res) => {
     }
 
     try {
+        // Fetch the faculty profile from Firestore
         const faculty = await facultyModel.findFacultyProfile(facultyId);
 
         if (!faculty) {
             return res.status(404).json({ message: 'Faculty not found' });
         }
 
-        // Exclude Password field
+        // Exclude the Password field
         const { Password, ...profile } = faculty;
         res.status(200).json(profile);
     } catch (error) {
@@ -60,6 +63,7 @@ exports.uploadSubjects = async (req, res) => {
             return res.status(400).json({ message: 'No subjects to upload.' });
         }
         
+        // Call the model function to insert or update subjects in Firestore
         await facultyModel.upsertSubjects(subjects);
         res.status(200).json({ message: 'Subjects uploaded successfully.' });
     } catch (error) {
@@ -68,7 +72,7 @@ exports.uploadSubjects = async (req, res) => {
     }
 };
 
-// Function to upload grades
+// Controller to handle uploading grades
 exports.uploadGrades = async (req, res) => {
     const { grades } = req.body;
 
@@ -77,7 +81,8 @@ exports.uploadGrades = async (req, res) => {
     }
 
     try {
-        await facultyModel.upsertGrades(grades); // Call the model function
+        // Call the model function to insert or update grades in Firestore
+        await facultyModel.upsertGrades(grades);
         res.status(200).json({ message: 'Grades upserted successfully' });
     } catch (error) {
         console.error('Error uploading grades:', error);
@@ -88,22 +93,22 @@ exports.uploadGrades = async (req, res) => {
 // Controller function to upsert GPA data in `cgpa_calculation`
 exports.storeCgpaCalculation = async (req, res) => {
     const { gpaData } = req.body;
-  
+
     try {
-      const result = await facultyModel.upsertCgpaCalculation(gpaData);
-  
-      if (result.success) {
-        res.status(200).json({ message: 'GPA results stored successfully!' });
-      } else {
-        res.status(500).json({ error: 'Failed to store GPA results. Please try again.' });
-      }
+        const result = await facultyModel.upsertCgpaCalculation(gpaData);
+
+        if (result.success) {
+            res.status(200).json({ message: 'GPA results stored successfully!' });
+        } else {
+            res.status(500).json({ error: 'Failed to store GPA results. Please try again.' });
+        }
     } catch (error) {
-      console.error('Error in FacultyController:', error);
-      res.status(500).json({ error: 'An error occurred while storing GPA results.' });
+        console.error('Error in FacultyController:', error);
+        res.status(500).json({ error: 'An error occurred while storing GPA results.' });
     }
 };
 
-// Controller to fetch cumulative CGPA results with optional fillters
+// Controller to fetch cumulative CGPA results with optional filters
 exports.getCumulativeCGPA = async (req, res) => {
     const { category, filterValue, department, section, batch } = req.query; // Destructure query parameters
 

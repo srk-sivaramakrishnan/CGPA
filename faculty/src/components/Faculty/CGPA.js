@@ -1,78 +1,107 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import '../../styles/Faculty/CGPA.css';
 import axios from 'axios';
 import baseURL from '../../auth/connection';
+import { useNavigate } from 'react-router-dom';
+import { X, Loader } from 'lucide-react'; // Importing Loader icon from lucide-react
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // To handle tables in PDF format
-import '../../styles/Faculty/CGPA.css';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable'; // Import the autoTable plugin
 
-function CGPA() {
+const CGPA = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false); // Initially set to false
+    const [error, setError] = useState(null);
 
-    // State variables for search
+    // States for handling dropdown and input
     const [searchCategory, setSearchCategory] = useState('rollNo');
     const [searchValue, setSearchValue] = useState('');
-    const [error, setError] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalData, setModalData] = useState([]);
-
-    // State variables for classwise search
     const [department, setDepartment] = useState('');
     const [section, setSection] = useState('');
     const [batch, setBatch] = useState('');
-    const [downloadFormat, setDownloadFormat] = useState('xlsx'); // For selecting download format
-    const [fileName, setFileName] = useState('cgpa_results'); // State to handle file name input
+    const [fileFormat, setFileFormat] = useState('xlsx'); // State for file format selection
 
-    const handleManageCGPAClick = () => {
-        navigate('/dashboard/cgpa/manage');
-    };
+    // States for popup modal
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [students, setStudents] = useState([]);
 
-    const handleSearchSubmit = async (e) => {
-        e.preventDefault();
+    const fileName = 'Classwise_CGPA_Results'; // For the exported file name
+
+    // Fetch CGPA data for a specific student or class
+    const fetchCGPAData = useCallback(async () => {
         try {
-            let params = { category: searchCategory, filterValue: searchValue };
-    
-            // If the search category is 'classwise', include department, section, and batch
-            if (searchCategory === 'classwise') {
-                params = { ...params, department, section, batch };
+            setLoading(true); // Start loading
+            const searchQuery = searchValue.trim();
+
+            if ((searchCategory === 'rollNo' || searchCategory === 'registerNo') && searchQuery !== '') {
+                const queryValue = searchCategory === 'registerNo'
+                    ? Number(searchQuery)
+                    : searchQuery.toUpperCase();
+
+                const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
+                    params: {
+                        category: searchCategory,
+                        filterValue: queryValue,
+                    }
+                });
+
+                if (response.data && response.data.length > 0) {
+                    setStudents(response.data);
+                    setIsModalOpen(true);
+                } else {
+                    setError(`No student found with this ${searchCategory === 'rollNo' ? 'Roll No' : 'Register Number'}.`);
+                }
+            } else if (searchCategory === 'classwise' && department && section && batch) {
+                const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
+                    params: {
+                        category: 'classwise',
+                        department,
+                        section,
+                        batch,
+                    }
+                });
+
+                if (response.data && response.data.length > 0) {
+                    setStudents(response.data);
+                    setIsModalOpen(true);
+                } else {
+                    setError('No students found for the selected class.');
+                }
+            } else {
+                setError('Please enter valid Roll No, Register No, or classwise search parameters.');
             }
-    
-            // Perform GET request without Authorization header
-            const response = await axios.get(`${baseURL}/faculty/cgpa-calculation`, {
-                params: params,
-                // No Authorization header here
-            });
-    
-            setModalData(response.data);  // Set results to modalData
-            setError('');  // Clear error message
-            setIsModalOpen(true);  // Open the modal with results
-        } catch (error) {
-            console.error('Error fetching CGPA results:', error);
-            setError('Failed to fetch CGPA results.');
+        } catch (err) {
+            setError('Failed to fetch CGPA data. Please try again later.');
+        } finally {
+            setLoading(false); // Stop loading
         }
-    };
-    
+    }, [searchCategory, searchValue, department, section, batch]);
 
-    const closeModal = () => {
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        setLoading(true); // Start loading when the search is submitted
+        fetchCGPAData();
+    };
+
+    const handleCloseModal = () => {
         setIsModalOpen(false);
+        setStudents([]);
     };
 
-    // Function to download the results as XLSX
+    // Function to download data as XLSX
     const downloadXLSX = () => {
         const headers = ['Roll No', 'Register No', 'Student Name', 'CGPA'];
-        const rows = modalData.map(result => [
-            result['Roll No'],
-            result['Register Number'],
-            result['Student Name'],
-            result.CGPA,
+        const rows = students.map(student => [
+            student.rollNo,
+            student.registerNumber,
+            student.studentName,
+            student.cgpa,
         ]);
 
         const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'CGPA Results');
 
-        // Add additional info in a separate sheet
         const additionalInfo = [
             ['Department:', department],
             ['Section:', section],
@@ -82,35 +111,31 @@ function CGPA() {
         const infoSheet = XLSX.utils.aoa_to_sheet(additionalInfo);
         XLSX.utils.book_append_sheet(wb, infoSheet, 'Additional Info');
 
-        // Download the file with the user-defined name
         XLSX.writeFile(wb, `${fileName}.xlsx`);
     };
 
-    // Function to download the results as PDF
+    // Function to download data as PDF
     const downloadPDF = () => {
         const doc = new jsPDF();
         doc.setFontSize(12);
 
-        // Get the page width and center the heading
         const pageWidth = doc.internal.pageSize.width;
-        const heading = 'CGPA Results';
+        const heading = 'Classwise CGPA Results';
         const headingWidth = doc.getTextWidth(heading);
-        const headingX = (pageWidth - headingWidth) / 2; // Calculate X to center
+        const headingX = (pageWidth - headingWidth) / 2;
 
-        // Add centered heading
         doc.text(heading, headingX, 10);
 
-        // Add additional info
         doc.text(`Department: ${department}`, 14, 20);
         doc.text(`Section: ${section}`, 14, 30);
         doc.text(`Batch: ${batch}`, 14, 40);
 
         const tableColumn = ['Roll No', 'Register No', 'Student Name', 'CGPA'];
-        const tableRows = modalData.map(result => [
-            result['Roll No'],
-            result['Register Number'],
-            result['Student Name'],
-            result.CGPA,
+        const tableRows = students.map(student => [
+            student.rollNo,
+            student.registerNumber,
+            student.studentName,
+            student.cgpa,
         ]);
 
         doc.autoTable({
@@ -119,16 +144,16 @@ function CGPA() {
             startY: 50,
         });
 
-        // Save the PDF with the user-defined name
         doc.save(`${fileName}.pdf`);
     };
 
-    // Function to handle download based on selected format
     const handleDownload = () => {
-        if (downloadFormat === 'xlsx') {
-            downloadXLSX();
-        } else if (downloadFormat === 'pdf') {
-            downloadPDF();
+        if (students.length > 0) {
+            if (fileFormat === 'xlsx') {
+                downloadXLSX();
+            } else if (fileFormat === 'pdf') {
+                downloadPDF();
+            }
         }
     };
 
@@ -136,7 +161,7 @@ function CGPA() {
         <div className="cgpa-container">
             <div className="cgpa-header">
                 <h2>CGPA</h2>
-                <button className="cgpa-control-button" onClick={handleManageCGPAClick}>
+                <button className="cgpa-control-button" onClick={() => navigate('/dashboard/cgpa/manage')}>
                     Manage CGPA
                 </button>
             </div>
@@ -155,7 +180,7 @@ function CGPA() {
                     </select>
                 </div>
 
-                {searchCategory !== 'classwise' && (
+                {(searchCategory === 'rollNo' || searchCategory === 'registerNo') && (
                     <div className="form-group">
                         <label htmlFor="search-value">
                             Enter {searchCategory === 'rollNo' ? 'Roll No' : 'Register No'}:
@@ -222,81 +247,69 @@ function CGPA() {
                 )}
 
                 <button type="submit" className="search-button">
-                    Search
+                    {loading ? (
+                        <Loader className="loading-spinner" /> 
+                    ) : (
+                        'Search'
+                    )}
                 </button>
             </form>
 
-            {/* Modal for displaying fetched data */}
+            {error && <div className="error">{error}</div>}
+
             {isModalOpen && (
-                <div className="cgpa-modal-overlay">
-                    <div className="cgpa-modal-content">
-                        <button className="cgpa-close-modal" onClick={closeModal}>
-                            &times;
+                <div className="modal-overlay">
+                    <div className="modal">
+                        <button className="close-button" onClick={handleCloseModal}>
+                            <X />
                         </button>
-                        <h3>CGPA Results</h3>
+                        <div className="modal-content">
+                            <h3>CGPA Results</h3>
 
-                        {/* Show download options only if the search is classwise */}
-                        {searchCategory === 'classwise' && (
-                            <div className="download-options">
-                                <label htmlFor="file-name">Enter File Name:</label>
-                                <input
-                                    type="text"
-                                    id="file-name"
-                                    value={fileName}
-                                    onChange={(e) => setFileName(e.target.value)}
-                                />
+                            {searchCategory === 'classwise' && (
+                                <>
+                                    <label htmlFor="file-format">Select File Format:</label>
+                                    <select
+                                        id="file-format"
+                                        value={fileFormat}
+                                        onChange={(e) => setFileFormat(e.target.value)}
+                                    >
+                                        <option value="xlsx">Excel</option>
+                                        <option value="pdf">PDF</option>
+                                    </select>
 
-                                <label htmlFor="download-format">Select Format:</label>
-                                <select
-                                    id="download-format"
-                                    value={downloadFormat}
-                                    onChange={(e) => setDownloadFormat(e.target.value)}
-                                >
-                                    <option value="xlsx">Excel Sheet</option>
-                                    <option value="pdf">PDF</option>
-                                </select>
+                                    <button onClick={handleDownload} className="download-button">
+                                        Download
+                                    </button>
+                                </>
+                            )}
 
-                                <button className="download-button" onClick={handleDownload}>
-                                    Download Results
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Display the error message if any */}
-                        {error && <p className="error-message">{error}</p>}
-
-                        {/* Display the results in a table inside the modal */}
-                        {modalData.length > 0 ? (
-                            <div>
-                                <table className="results-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Roll No</th>
-                                            <th>Register No</th>
-                                            <th>Student Name</th>
-                                            <th>CGPA</th>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Roll No</th>
+                                        <th>Register No</th>
+                                        <th>Student Name</th>
+                                        <th>CGPA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map((student) => (
+                                        <tr key={student.registerNumber}>
+                                            <td>{student.rollNo}</td>
+                                            <td>{student.registerNumber}</td>
+                                            <td>{student.studentName}</td>
+                                            <td>{student.cgpa}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {modalData.map((data, index) => (
-                                            <tr key={index}>
-                                                <td>{data['Roll No']}</td>
-                                                <td>{data['Register Number']}</td>
-                                                <td>{data['Student Name']}</td>
-                                                <td>{data.CGPA}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <p>No results found</p>
-                        )}
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
         </div>
     );
-}
+};
 
 export default CGPA;

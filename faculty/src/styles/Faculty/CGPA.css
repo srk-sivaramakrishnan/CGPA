@@ -1,274 +1,279 @@
-
+/* General styling for CGPA container */
 .cgpa-container {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    position: relative;
+    font-family: 'Roboto', sans-serif;
+    padding: 30px;
+    background-color: #fff;
+    min-height: 100vh;
+
 }
 
+/* Header styling */
 .cgpa-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    background-color: #fff;
+    padding: 15px 25px;
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.cgpa-header h2 {
+    font-size: 28px;
+    font-weight: 500;
 }
 
 .cgpa-control-button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
+    background-color: #004d40;
     color: white;
     border: none;
+    padding: 12px 24px;
+    font-size: 16px;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
 }
 
+.cgpa-control-button:hover {
+    background-color: #00796b;
+}
+
+/* Search form styling */
 .search-form {
-    margin-bottom: 20px;
-    background-color: #f4f4f4;
-    padding: 20px;
-    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+    transition: transform 0.3s ease-in-out;
+}
+
+.search-form:hover {
+    transform: translateY(-5px);
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
-    display: block;
-    font-weight: bold;
-}
-
-.form-group select{
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
-
-.form-group input{
-    width: 98%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
-.search-button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.results-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.results-table th,
-.results-table td {
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #ddd;
-}
-
-.results-table th {
-    background-color: #f2f2f2;
-    color: #333;
-    font-weight: bold;
-}
-
-.results-table td {
-    background-color: #fff;
-}
-
-.results-table tr:hover {
-    background-color: #f9f9f9;
-    cursor: pointer;
-}
-
-.error-message {
-    color: red;
-    font-weight: bold;
-    margin-top: 10px;
     font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
 }
 
-.error-message-wrapper {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: rgba(255, 0, 0, 0.1);
-    color: red;
-    padding: 15px;
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.3s ease;
 }
 
-/* Modal Overlay */
-.cgpa-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6); /* Dark semi-transparent background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(5px); /* Blurs the background */
-    z-index: 1000;
+.form-group select:focus,
+.form-group input:focus {
+    border-color: #00796b;
+    outline: none;
 }
 
-/* Modal Content */
-.cgpa-modal-content {
-    width: 90%;
-    max-width: 600px;
-    background: #fff;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease-out;
-    position: relative;
-    overflow-y: auto;
-    max-height: 80vh;
+/* Search button styling */
+.search-button {
+    background-color: #00796b;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
 }
 
-/* Slide-in animation */
-@keyframes slideIn {
-    from {
-        transform: translateY(-50px);
-        opacity: 0;
+.search-button:hover {
+    background-color: #004d40;
+}
+
+.loading-spinner {
+    width: 30px;
+    height: 30px;
+    background-color: #3498db;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
     }
-    to {
-        transform: translateY(0);
+    50% {
+        transform: scale(1.2);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1);
         opacity: 1;
     }
 }
 
-/* Modal Header */
-.cgpa-modal-content h3 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 1rem;
-    text-align: center;
+
+/* Modal Overlay Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    transition: opacity 0.3s ease;
 }
 
-/* Close Button */
-.cgpa-close-modal {
+/* Modal Box Styling */
+.modal {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 950px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 101;
+    animation: fadeIn 0.5s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Animation for the modal */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Close Button Styling */
+.close-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 1.5rem;
-    color: #999;
-    background: transparent;
+    top: 15px;
+    right: 15px;
+    background: none;
     border: none;
     cursor: pointer;
-    transition: color 0.2s;
+    color: #555;
+    font-size: 24px;
 }
 
-.cgpa-close-modal:hover {
+/* Modal Content Styling */
+.modal-content {
+    padding: 20px;
+}
+
+/* Heading for Modal */
+.modal-content h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
     color: #333;
 }
 
-/* Table Styling */
-.results-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    font-size: 0.95rem;
+/* File Format Dropdown Styling */
+.modal-content label {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
 }
 
-.results-table th,
-.results-table td {
-    padding: 0.75rem;
+.modal-content select {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.modal-content select:focus {
+    border-color: #00796b;
+    outline: none;
+}
+
+/* Download Button Styling */
+.download-button {
+    background-color: #00796b;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* Hover effect for download button */
+.download-button:hover {
+    background-color: #004d40;
+    transform: translateY(-3px);
+}
+
+/* Icon in download button */
+.download-button svg {
+    font-size: 20px;
+}
+
+/* Text inside the download button */
+.download-button span {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Table Styling inside Modal */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+    font-size: 16px;
+}
+
+th,
+td {
+    padding: 12px 15px;
     border: 1px solid #ddd;
     text-align: left;
 }
 
-.results-table th {
-    background-color: #f4f4f4;
-    font-weight: bold;
-    color: #555;
-}
-
-.results-table tbody tr:nth-child(even) {
-    background-color: #fafafa;
-}
-
-/* Scrollable Modal Content */
-.cgpa-modal-content {
-    overflow-y: auto;
-}
-
-/* Download Options Styling */
-.download-options {
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column; /* Stack input and dropdown vertically */
-    gap: 0.5rem;
-}
-
-/* Input box for download options */
-.download-options input[type="text"] {
-    padding: 0.5rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    width: 98%;
-}
-
-/* Dropdown box styling */
-.download-options select {
-    padding: 0.5rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    width: 100%;
-    background-color: #f8f8f8;
-    font-size: 1rem;
-}
-
-/* Download Button */
-.download-button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background-color: #4CAF50; /* Green */
+th {
+    background-color: #00796b;
     color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    font-weight: 500;
 }
 
-.download-button:hover {
-    background-color: #45a049;
+tr:nth-child(even) {
+    background-color: #f1f1f1;
 }
 
-/* Error Message */
-.error-message {
-    color: red;
-    font-weight: bold;
-    margin-top: 1rem;
-    text-align: center;
+tr:hover {
+    background-color: #e0f2f1;
 }
 
-/* Media Queries for Responsive Modal */
-@media (max-width: 768px) {
-    .cgpa-modal-content {
-        padding: 1rem;
-    }
-
-    .results-table th,
-    .results-table td {
-        padding: 0.5rem;
-    }
-
-    .download-options {
-        gap: 0.75rem;
-    }
+td {
+    color: #555;
 }

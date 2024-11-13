@@ -2,8 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const cors = require('cors'); // Import CORS
-const adminRoutes = require('./routes/AdminRoutes'); // Assuming you have admin routes
-const facultyRoutes = require('./routes/FacultyRoutes'); // Assuming you have faculty routes
+const adminRoutes = require('./routes/AdminRoute'); // Admin routes
+const facultyRoutes = require('./routes/FacultyRoute');
 
 // Load environment variables
 dotenv.config();
@@ -13,11 +13,11 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors()); // Enable CORS for all origins
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // Parse JSON body
 
 // Use routes
-app.use('/admsin', adminRoutes);
-app.use('/facultys', facultyRoutes);
+app.use('/admin', adminRoutes);  // Make sure you're correctly using this route
+app.use('/faculty', facultyRoutes);  // If you're also using other routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
