@@ -117,15 +117,16 @@ const CGPA = () => {
     // Function to download data as PDF
     const downloadPDF = () => {
         const doc = new jsPDF();
-        doc.setFontSize(12);
+
+        doc.setFontSize(10);
 
         const pageWidth = doc.internal.pageSize.width;
         const heading = 'Classwise CGPA Results';
         const headingWidth = doc.getTextWidth(heading);
         const headingX = (pageWidth - headingWidth) / 2;
-
         doc.text(heading, headingX, 10);
 
+        doc.setFontSize(8);
         doc.text(`Department: ${department}`, 14, 20);
         doc.text(`Section: ${section}`, 14, 30);
         doc.text(`Batch: ${batch}`, 14, 40);
@@ -142,6 +143,21 @@ const CGPA = () => {
             head: [tableColumn],
             body: tableRows,
             startY: 50,
+            theme: 'grid',
+            styles: {
+                fontSize: 8,
+                cellPadding: 1,
+                halign: 'center',
+            },
+            headStyles: {
+                fillColor: [0, 123, 255],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                lineWidth: 0.3,
+                lineColor: [150, 150, 150],
+            },
+            tableLineWidth: 0.3,
+            tableLineColor: [150, 150, 150],
         });
 
         doc.save(`${fileName}.pdf`);
@@ -248,7 +264,7 @@ const CGPA = () => {
 
                 <button type="submit" className="search-button">
                     {loading ? (
-                        <Loader className="loading-spinner" /> 
+                        <Loader className="loading-spinner" /> // Show spinner if loading
                     ) : (
                         'Search'
                     )}
